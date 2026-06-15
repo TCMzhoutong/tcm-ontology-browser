@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>中医本体词表浏览器</title>
+  <style>
+    :root {
+      --bg: #f6f7f8;
+      --panel: #ffffff;
+      --line: #d9dee3;
+      --text: #1e252b;
+      --muted: #66717b;
+      --accent: #21736b;
+      --accent-soft: #e5f2ef;
+      --warn: #9a5b00;
+      --warn-soft: #fff4d7;
+      --bad: #9b2f2f;
+      --bad-soft: #fde8e8;
+      --code: #26333d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .app {
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+      min-height: 640px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: minmax(260px, 520px) 1fr minmax(240px, 420px);
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    select, input {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+      font: inherit;
+    }
+    .stats {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #fff;
+      font-size: 12px;
+    }
+    .main {
+      display: grid;
+      grid-template-columns: minmax(320px, 42vw) 1fr;
+      min-height: 0;
+    }
+    .tree-pane, .detail-pane {
+      min-height: 0;
+      overflow: auto;
+    }
+    .tree-pane {
+      border-right: 1px solid var(--line);
+      background: #fbfbfc;
+    }
+    .tree-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbfc;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    button {
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      padding: 0 9px;
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    .tree {
+      padding: 8px 4px 24px;
+    }
+    .node-row {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      min-height: 30px;
+      border-radius: 6px;
+      margin: 1px 4px;
+      padding-right: 8px;
+      cursor: pointer;
+    }
+    .node-row:hover { background: #eef2f4; }
+    .node-row.selected {
+      background: var(--accent-soft);
+      color: #0f4d47;
+      font-weight: 600;
+    }
+    .twisty {
+      width: 22px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .node-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .node-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .children { display: none; }
+    .children.open { display: block; }
+    .detail-pane {
+      background: var(--panel);
+      padding: 18px 22px 40px;
+    }
+    .detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 24px;
+      line-height: 1.25;
+      margin: 0 0 6px;
+      letter-spacing: 0;
+    }
+    .sub {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .badge.ok { background: var(--accent-soft); border-color: #b7d9d4; color: #126158; }
+    .badge.warn { background: var(--warn-soft); border-color: #edcf87; color: var(--warn); }
+    .badge.bad { background: var(--bad-soft); border-color: #efb0b0; color: var(--bad); }
+    .grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .key, .value {
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--line);
+    }
+    .key {
+      background: #f7f8f9;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .value {
+      min-width: 0;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .grid .key:last-of-type, .grid .value:last-child { border-bottom: 0; }
+    .empty {
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      text-align: center;
+    }
+    .search-results {
+      display: none;
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .search-results.open { display: block; }
+    .result-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .result-item:hover { background: #eef2f4; }
+    @media (max-width: 860px) {
+      .app { height: auto; min-height: 100vh; }
+      header { grid-template-columns: 1fr; height: auto; }
+      .main { grid-template-columns: 1fr; }
+      .tree-pane { height: 45vh; border-right: 0; border-bottom: 1px solid var(--line); }
+      .grid { grid-template-columns: 1fr; }
+      .key { border-bottom: 0; padding-bottom: 3px; }
+      .value { padding-top: 3px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <select id="vocabSelect" aria-label="选择词表"></select>
+      <div class="stats" id="stats"></div>
+      <input id="searchInput" placeholder="搜索概念名 / ID / 异名" />
+    </header>
+    <main class="main">
+      <section class="tree-pane">
+        <div class="tree-toolbar">
+          <span id="treeStatus">加载中</span>
+          <span>
+            <button id="collapseBtn">收起</button>
+          </span>
+        </div>
+        <div id="searchResults" class="search-results"></div>
+        <div id="tree" class="tree"></div>
+      </section>
+      <section id="detail" class="detail-pane">
+        <div class="empty">选择一个节点查看属性</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      index: [],
+      vocab: null,
+      data: null,
+      selectedId: null,
+      rendered: new Map(),
+      expanded: new Set(),
+    };
+
+    const fields = [
+      ["localId", "本地编号"],
+      ["conceptName", "概念名"],
+      ["preferredName", "正式名"],
+      ["aliases", "异名"],
+      ["englishNames", "英文名"],
+      ["pinyinNames", "拼音名"],
+      ["definitions", "概念定义"],
+      ["parentName", "上级节点"],
+      ["definitionSources", "定义来源"],
+      ["otherTermTypes", "其他术语"],
+      ["extraInfo", "补充信息"],
+    ];
+
+    const vocabSelect = document.getElementById("vocabSelect");
+    const statsEl = document.getElementById("stats");
+    const treeEl = document.getElementById("tree");
+    const detailEl = document.getElementById("detail");
+    const treeStatus = document.getElementById("treeStatus");
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    function esc(text) {
+      return String(text ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    async function init() {
+      state.index = await fetch("data/_index.json").then(r => r.json());
+      vocabSelect.innerHTML = state.index.map((item, idx) =>
+        `<option value="${idx}">${esc(item.name)}</option>`
+      ).join("");
+      vocabSelect.addEventListener("change", () => loadVocab(Number(vocabSelect.value)));
+      document.getElementById("collapseBtn").addEventListener("click", collapseAll);
+      searchInput.addEventListener("input", debounce(runSearch, 180));
+      await loadVocab(0);
+    }
+
+    async function loadVocab(index) {
+      const meta = state.index[index];
+      state.vocab = meta;
+      state.data = await fetch(`data/${encodeURIComponent(meta.file)}`).then(r => r.json());
+      state.selectedId = null;
+      state.rendered.clear();
+      state.expanded.clear();
+      searchInput.value = "";
+      searchResults.classList.remove("open");
+      renderStats(meta);
+      renderTree();
+      detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
+    }
+
+    function renderStats(meta) {
+      statsEl.innerHTML = [
+        ["节点", meta.nodes],
+        ["根", meta.roots],
+      ].map(([k, v]) => `<span class="pill">${k}: ${v}</span>`).join("");
+    }
+
+    function renderTree() {
+      const roots = state.data.roots || [];
+      treeEl.innerHTML = "";
+      roots.forEach(id => treeEl.appendChild(renderNode(id, 0)));
+      treeStatus.textContent = `${roots.length} 个根节点`;
+    }
+
+    function renderNode(id, depth) {
+      const node = state.data.nodes[id];
+      const childIds = state.data.children[id] || [];
+      const wrap = document.createElement("div");
+      wrap.dataset.id = id;
+      wrap.dataset.depth = depth;
+      state.rendered.set(id, wrap);
+
+      const row = document.createElement("div");
+      row.className = "node-row";
+      row.style.paddingLeft = `${Math.min(depth * 16, 160)}px`;
+      row.dataset.id = id;
+
+      const twisty = document.createElement("div");
+      twisty.className = "twisty";
+      twisty.textContent = childIds.length ? "▸" : "";
+      row.appendChild(twisty);
+
+      const label = document.createElement("div");
+      label.className = "node-label";
+      label.textContent = node.label || id;
+      row.appendChild(label);
+
+      const meta = document.createElement("div");
+      meta.className = "node-meta";
+      meta.textContent = childIds.length ? childIds.length : "";
+      row.appendChild(meta);
+
+      row.addEventListener("click", event => {
+        event.stopPropagation();
+        selectNode(id);
+        if (childIds.length) toggleNode(id);
+      });
+
+      const children = document.createElement("div");
+      children.className = "children";
+      children.dataset.childrenOf = id;
+
+      wrap.appendChild(row);
+      wrap.appendChild(children);
+      return wrap;
+    }
+
+    function toggleNode(id, forceOpen = null) {
+      const wrap = state.rendered.get(id);
+      if (!wrap) return;
+      const childrenEl = wrap.querySelector(`[data-children-of="${CSS.escape(id)}"]`);
+      const row = wrap.querySelector(".node-row");
+      const twisty = wrap.querySelector(".twisty");
+      const childIds = state.data.children[id] || [];
+      if (!childIds.length) return;
+
+      const shouldOpen = forceOpen === null ? !state.expanded.has(id) : forceOpen;
+      if (shouldOpen) {
+        if (!childrenEl.dataset.loaded) {
+          const depth = Number(wrap.dataset.depth || 0) + 1;
+          childIds.forEach(childId => childrenEl.appendChild(renderNode(childId, depth)));
+          childrenEl.dataset.loaded = "1";
+        }
+        childrenEl.classList.add("open");
+        twisty.textContent = "▾";
+        state.expanded.add(id);
+      } else {
+        childrenEl.classList.remove("open");
+        twisty.textContent = "▸";
+        state.expanded.delete(id);
+      }
+    }
+
+    function selectNode(id) {
+      if (state.selectedId && state.rendered.has(state.selectedId)) {
+        state.rendered.get(state.selectedId).querySelector(".node-row").classList.remove("selected");
+      }
+      state.selectedId = id;
+      if (state.rendered.has(id)) {
+        state.rendered.get(id).querySelector(".node-row").classList.add("selected");
+      }
+      renderDetail(state.data.nodes[id]);
+    }
+
+    function badgeClass(value) {
+      return "ok";
+    }
+
+    function renderDetail(node) {
+      detailEl.innerHTML = `
+        <div class="detail-head">
+          <div>
+            <h1>${esc(node.label || node.id)}</h1>
+            <div class="sub">${esc(node.localId || node.id)}</div>
+          </div>
+          <span class="badge ok">${esc(state.vocab?.id || "")}</span>
+        </div>
+        <div class="grid">
+          ${fields.map(([key, label]) => `
+            <div class="key">${esc(label)}</div>
+            <div class="value">${esc(node[key] || "")}</div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function collapseAll() {
+      state.expanded.clear();
+      state.rendered.clear();
+      state.selectedId = null;
+      renderTree();
+      detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
+    }
+
+    function runSearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResults.classList.remove("open");
+        searchResults.innerHTML = "";
+        return;
+      }
+      const nodes = Object.values(state.data.nodes);
+      const hits = [];
+      for (const node of nodes) {
+        const hay = [
+          node.id, node.localId, node.label, node.aliases, node.englishNames, node.pinyinNames,
+          node.definitions, node.parentName, node.extraInfo
+        ].join(" ").toLowerCase();
+        if (hay.includes(query)) hits.push(node);
+        if (hits.length >= 80) break;
+      }
+      searchResults.innerHTML = hits.length
+        ? hits.map(node => `
+            <div class="result-item" data-id="${esc(node.id)}">
+              <span>${esc(node.label)}</span><span class="sub">${esc(node.localId || node.id)}</span>
+            </div>
+          `).join("")
+        : `<div class="sub">无匹配</div>`;
+      searchResults.classList.add("open");
+      searchResults.querySelectorAll(".result-item").forEach(item => {
+        item.addEventListener("click", () => revealNode(item.dataset.id));
+      });
+    }
+
+    function revealNode(id) {
+      const node = state.data.nodes[id];
+      if (!node) return;
+      const lineage = [];
+      let current = node;
+      const guard = new Set();
+      while (current && current.parent && current.parent !== "0" && !guard.has(current.parent)) {
+        guard.add(current.parent);
+        lineage.unshift(current.parent);
+        current = state.data.nodes[current.parent];
+      }
+      lineage.forEach(parentId => {
+        if (!state.rendered.has(parentId)) {
+          const parent = state.data.nodes[parentId];
+          if (parent && parent.parent && state.rendered.has(parent.parent)) {
+            toggleNode(parent.parent, true);
+          }
+        }
+        toggleNode(parentId, true);
+      });
+      selectNode(id);
+      const wrap = state.rendered.get(id);
+      if (wrap) wrap.scrollIntoView({ block: "center" });
+    }
+
+    function debounce(fn, delay) {
+      let timer = null;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    init().catch(error => {
+      treeStatus.textContent = "加载失败";
+      detailEl.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
