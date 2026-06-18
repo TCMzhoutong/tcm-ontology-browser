@@ -6,18 +6,20 @@
   <title>中医本体词表浏览器</title>
   <style>
     :root {
-      --bg: #f6f7f8;
-      --panel: #ffffff;
-      --line: #d9dee3;
-      --text: #1e252b;
-      --muted: #66717b;
-      --accent: #21736b;
-      --accent-soft: #e5f2ef;
+      --bg: #f7f7f4;
+      --panel: #fffefa;
+      --panel-soft: #fbfaf5;
+      --line: #ddd8cf;
+      --text: #222;
+      --muted: #666;
+      --accent: #2f6f73;
+      --accent-soft: #e6f0ee;
       --warn: #9a5b00;
       --warn-soft: #fff4d7;
       --bad: #9b2f2f;
       --bad-soft: #fde8e8;
       --code: #26333d;
+      --shadow: 0 1px 2px rgba(42, 36, 24, .04);
     }
 
     * { box-sizing: border-box; }
@@ -25,24 +27,29 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
     .app {
       display: grid;
-      grid-template-rows: 56px 1fr;
+      grid-template-rows: auto 1fr;
       height: 100vh;
       min-height: 640px;
     }
     header {
+      position: relative;
+      z-index: 100;
       display: grid;
       grid-template-columns: minmax(260px, 520px) 1fr minmax(240px, 420px);
       align-items: center;
       gap: 12px;
-      padding: 8px 14px;
+      min-height: 58px;
+      padding: 10px 16px;
       border-bottom: 1px solid var(--line);
-      background: var(--panel);
+      background: rgba(247, 247, 244, .96);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
     }
-    select, input {
+    input {
       width: 100%;
       height: 36px;
       border: 1px solid var(--line);
@@ -51,6 +58,80 @@
       color: var(--text);
       padding: 0 10px;
       font: inherit;
+    }
+    input:focus, .vocab-button:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(47, 111, 115, .12);
+    }
+    .vocab-picker {
+      position: relative;
+      z-index: 101;
+      min-width: 0;
+    }
+    .vocab-button {
+      width: 100%;
+      height: 36px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .vocab-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .vocab-caret {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .vocab-menu {
+      position: fixed;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 10000;
+      width: min(520px, calc(100vw - 32px));
+      max-height: min(68vh, 560px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      display: none;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      box-shadow: 0 14px 34px rgba(42, 36, 24, .14);
+    }
+    .vocab-menu.open { display: block; }
+    .vocab-option {
+      min-height: 32px;
+      height: auto;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      padding: 7px 8px;
+      text-align: left;
+      color: var(--text);
+      white-space: normal;
+      line-height: 1.35;
+    }
+    .vocab-option:hover { background: #f0eee7; color: var(--accent); }
+    .vocab-option.active {
+      background: var(--accent-soft);
+      color: #0f4d47;
+      font-weight: 600;
     }
     .stats {
       display: flex;
@@ -78,7 +159,7 @@
     }
     .tree-pane {
       border-right: 1px solid var(--line);
-      background: #fbfbfc;
+      background: var(--panel-soft);
     }
     .tree-toolbar {
       position: sticky;
@@ -89,7 +170,8 @@
       gap: 8px;
       padding: 8px 10px;
       border-bottom: 1px solid var(--line);
-      background: #fbfbfc;
+      background: rgba(251, 250, 245, .96);
+      backdrop-filter: blur(6px);
       color: var(--muted);
       font-size: 12px;
     }
@@ -118,7 +200,7 @@
       padding-right: 8px;
       cursor: pointer;
     }
-    .node-row:hover { background: #eef2f4; }
+    .node-row:hover { background: #f0eee7; }
     .node-row.selected {
       background: var(--accent-soft);
       color: #0f4d47;
@@ -186,13 +268,14 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
+      background: #fff;
     }
     .key, .value {
       padding: 9px 11px;
       border-bottom: 1px solid var(--line);
     }
     .key {
-      background: #f7f8f9;
+      background: #f7f5ef;
       color: var(--muted);
       font-size: 12px;
     }
@@ -202,6 +285,34 @@
       white-space: pre-wrap;
     }
     .grid .key:last-of-type, .grid .value:last-child { border-bottom: 0; }
+    .evidence-images {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .evidence-images h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .evidence-images figure {
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+      overflow-x: auto;
+    }
+    .evidence-images img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      background: var(--panel);
+    }
+    .evidence-images figcaption {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
     .empty {
       color: var(--muted);
       display: grid;
@@ -224,10 +335,15 @@
       justify-content: space-between;
       gap: 10px;
     }
-    .result-item:hover { background: #eef2f4; }
+    .result-item:hover { background: #f0eee7; }
     @media (max-width: 860px) {
       .app { height: auto; min-height: 100vh; }
       header { grid-template-columns: 1fr; height: auto; }
+      .vocab-menu {
+        width: calc(100vw - 24px);
+        max-height: 70vh;
+        overflow: auto;
+      }
       .main { grid-template-columns: 1fr; }
       .tree-pane { height: 45vh; border-right: 0; border-bottom: 1px solid var(--line); }
       .grid { grid-template-columns: 1fr; }
@@ -239,7 +355,12 @@
 <body>
   <div class="app">
     <header>
-      <select id="vocabSelect" aria-label="选择词表"></select>
+      <div class="vocab-picker" id="vocabPicker">
+        <button id="vocabButton" class="vocab-button" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="vocab-label" id="vocabLabel">选择词表</span>
+          <span class="vocab-caret">▾</span>
+        </button>
+      </div>
       <div class="stats" id="stats"></div>
       <input id="searchInput" placeholder="搜索概念名 / ID / 异名" />
     </header>
@@ -259,8 +380,16 @@
       </section>
     </main>
   </div>
+  <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
+    const APP_VERSION = "20260618-jianbo-punctuation";
+
+    function dataUrl(path) {
+      const separator = path.includes("?") ? "&" : "?";
+      return `${path}${separator}v=${APP_VERSION}`;
+    }
+
     const state = {
       index: [],
       vocab: null,
@@ -278,13 +407,19 @@
       ["englishNames", "英文名"],
       ["pinyinNames", "拼音名"],
       ["definitions", "概念定义"],
+      ["differentForms", "不同文字形式"],
+      ["jianboSources", "来源简帛"],
       ["parentName", "上级节点"],
       ["definitionSources", "定义来源"],
+      ["attachmentInfo", "附件信息"],
       ["otherTermTypes", "其他术语"],
       ["extraInfo", "补充信息"],
     ];
 
-    const vocabSelect = document.getElementById("vocabSelect");
+    const vocabPicker = document.getElementById("vocabPicker");
+    const vocabButton = document.getElementById("vocabButton");
+    const vocabLabel = document.getElementById("vocabLabel");
+    const vocabMenu = document.getElementById("vocabMenu");
     const statsEl = document.getElementById("stats");
     const treeEl = document.getElementById("tree");
     const detailEl = document.getElementById("detail");
@@ -299,25 +434,73 @@
     }
 
     async function init() {
-      state.index = await fetch("data/_index.json").then(r => r.json());
-      vocabSelect.innerHTML = state.index.map((item, idx) =>
-        `<option value="${idx}">${esc(item.name)}</option>`
-      ).join("");
-      vocabSelect.addEventListener("change", () => loadVocab(Number(vocabSelect.value)));
+      state.index = await fetch(dataUrl("data/_index.json"), { cache: "no-store" }).then(r => r.json());
+      document.body.appendChild(vocabMenu);
+      renderVocabMenu();
+      vocabButton.addEventListener("click", event => {
+        event.stopPropagation();
+        const open = !vocabMenu.classList.contains("open");
+        vocabMenu.classList.toggle("open", open);
+        vocabButton.setAttribute("aria-expanded", String(open));
+        if (open) positionVocabMenu();
+      });
+      window.addEventListener("resize", () => {
+        if (vocabMenu.classList.contains("open")) positionVocabMenu();
+      });
+      window.addEventListener("scroll", () => {
+        if (vocabMenu.classList.contains("open")) positionVocabMenu();
+      }, true);
+      document.addEventListener("click", event => {
+        if (!vocabPicker.contains(event.target) && !vocabMenu.contains(event.target)) {
+          vocabMenu.classList.remove("open");
+          vocabButton.setAttribute("aria-expanded", "false");
+        }
+      });
       document.getElementById("collapseBtn").addEventListener("click", collapseAll);
       searchInput.addEventListener("input", debounce(runSearch, 180));
       await loadVocab(0);
     }
 
+    function renderVocabMenu() {
+      vocabMenu.innerHTML = state.index.map((item, idx) => `
+        <button class="vocab-option" type="button" role="option" data-index="${idx}" aria-selected="false">
+          ${esc(item.name)}
+        </button>
+      `).join("");
+      vocabMenu.querySelectorAll(".vocab-option").forEach(option => {
+        option.addEventListener("click", event => {
+          event.stopPropagation();
+          vocabMenu.classList.remove("open");
+          vocabButton.setAttribute("aria-expanded", "false");
+          loadVocab(Number(option.dataset.index));
+        });
+      });
+    }
+
+    function positionVocabMenu() {
+      const rect = vocabButton.getBoundingClientRect();
+      const margin = 12;
+      const width = Math.min(Math.max(rect.width, 360), window.innerWidth - margin * 2);
+      vocabMenu.style.width = `${width}px`;
+      vocabMenu.style.left = `${Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin))}px`;
+      vocabMenu.style.top = `${rect.bottom + 6}px`;
+    }
+
     async function loadVocab(index) {
       const meta = state.index[index];
       state.vocab = meta;
-      state.data = await fetch(`data/${encodeURIComponent(meta.file)}`).then(r => r.json());
+      state.data = await fetch(dataUrl(`data/${encodeURIComponent(meta.file)}`), { cache: "no-store" }).then(r => r.json());
       state.selectedId = null;
       state.rendered.clear();
       state.expanded.clear();
       searchInput.value = "";
       searchResults.classList.remove("open");
+      vocabLabel.textContent = meta.name;
+      vocabMenu.querySelectorAll(".vocab-option").forEach(option => {
+        const active = Number(option.dataset.index) === index;
+        option.classList.toggle("active", active);
+        option.setAttribute("aria-selected", String(active));
+      });
       renderStats(meta);
       renderTree();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
@@ -422,6 +605,11 @@
     }
 
     function renderDetail(node) {
+      const visibleFields = fields.filter(([key]) => {
+        const value = node[key];
+        return Array.isArray(value) ? value.length : String(value || "").trim();
+      });
+      const imagePaths = Array.isArray(node.imagePaths) ? node.imagePaths : [];
       detailEl.innerHTML = `
         <div class="detail-head">
           <div>
@@ -431,11 +619,22 @@
           <span class="badge ok">${esc(state.vocab?.id || "")}</span>
         </div>
         <div class="grid">
-          ${fields.map(([key, label]) => `
+          ${visibleFields.map(([key, label]) => `
             <div class="key">${esc(label)}</div>
             <div class="value">${esc(node[key] || "")}</div>
           `).join("")}
         </div>
+        ${imagePaths.length ? `
+          <div class="evidence-images">
+            <h2>证据截图</h2>
+            ${imagePaths.map((src, idx) => `
+              <figure>
+                <a href="${esc(src)}" target="_blank"><img src="${esc(src)}" alt="证据截图 ${idx + 1}" loading="lazy"></a>
+                <figcaption>证据截图 ${idx + 1}</figcaption>
+              </figure>
+            `).join("")}
+          </div>
+        ` : ""}
       `;
     }
 
