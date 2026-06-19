@@ -383,7 +383,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260618-jianbo-punctuation";
+    const APP_VERSION = "20260619-field-cleanup";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -409,7 +409,7 @@
       ["definitions", "概念定义"],
       ["differentForms", "不同文字形式"],
       ["jianboSources", "来源简帛"],
-      ["parentName", "上级节点"],
+      ["lineagePath", "所属路径"],
       ["definitionSources", "定义来源"],
       ["attachmentInfo", "附件信息"],
       ["otherTermTypes", "其他术语"],
@@ -620,7 +620,7 @@
         </div>
         <div class="grid">
           ${visibleFields.map(([key, label]) => `
-            <div class="key">${esc(label)}</div>
+            <div class="key">${esc(fieldLabel(node, key, label))}</div>
             <div class="value">${esc(node[key] || "")}</div>
           `).join("")}
         </div>
@@ -636,6 +636,11 @@
           </div>
         ` : ""}
       `;
+    }
+
+    function fieldLabel(node, key, fallback) {
+      if (key === "definitions" && node.definitionsLabel) return node.definitionsLabel;
+      return fallback;
     }
 
     function collapseAll() {
@@ -658,7 +663,7 @@
       for (const node of nodes) {
         const hay = [
           node.id, node.localId, node.label, node.aliases, node.englishNames, node.pinyinNames,
-          node.definitions, node.parentName, node.extraInfo
+          node.definitions, node.lineagePath, node.extraInfo
         ].join(" ").toLowerCase();
         if (hay.includes(query)) hits.push(node);
         if (hits.length >= 80) break;
