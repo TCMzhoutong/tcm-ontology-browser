@@ -438,11 +438,21 @@
       padding: 6px 8px;
       border-radius: 6px;
       cursor: pointer;
+      display: grid;
+      gap: 10px;
+    }
+    .result-item:hover { background: #f0eee7; }
+    .result-title {
       display: flex;
       justify-content: space-between;
       gap: 10px;
     }
-    .result-item:hover { background: #f0eee7; }
+    .result-path {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
     @media (max-width: 860px) {
       .app { height: auto; min-height: 100vh; }
       header { grid-template-columns: 1fr; height: auto; }
@@ -494,7 +504,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260623-vocab-categories";
+    const APP_VERSION = "20260623-global-search";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -507,6 +517,7 @@
       data: null,
       related: {},
       relatedCache: new Map(),
+      searchIndex: null,
       selectedId: null,
       rendered: new Map(),
       expanded: new Set(),
@@ -897,34 +908,66 @@
       renderRelated(null);
     }
 
-    function runSearch() {
+    async function loadSearchIndex() {
+      if (state.searchIndex) return state.searchIndex;
+      state.searchIndex = await fetch(dataUrl("data/search_index.json"), { cache: "no-store" }).then(r => r.json());
+      return state.searchIndex;
+    }
+
+    async function runSearch() {
       const query = searchInput.value.trim().toLowerCase();
       if (!query) {
         searchResults.classList.remove("open");
         searchResults.innerHTML = "";
         return;
       }
-      const nodes = Object.values(state.data.nodes);
-      const hits = [];
-      for (const node of nodes) {
-        const hay = [
-          node.id, node.localId, node.label, node.aliases, node.englishNames, node.pinyinNames,
-          node.definitions, node.lineagePath, node.extraInfo
-        ].join(" ").toLowerCase();
-        if (hay.includes(query)) hits.push(node);
-        if (hits.length >= 80) break;
-      }
+      searchResults.innerHTML = `<div class="sub">检索中...</div>`;
+      searchResults.classList.add("open");
+      const records = await loadSearchIndex();
+      const hits = records
+        .filter(record => record.text.includes(query))
+        .sort(searchResultSort)
+        .slice(0, 120);
       searchResults.innerHTML = hits.length
-        ? hits.map(node => `
-            <div class="result-item" data-id="${esc(node.id)}">
-              <span>${esc(node.label)}</span><span class="sub">${esc(node.localId || node.id)}</span>
+        ? hits.map(record => `
+            <div class="result-item" data-vocab="${esc(record.vocabId)}" data-id="${esc(record.id)}">
+              <div class="result-title">
+                <span>${esc(record.label)}</span>
+                <span class="sub">${esc(resultMeta(record))}</span>
+              </div>
+              ${record.path ? `<div class="result-path">｜${esc(record.path)}</div>` : ""}
             </div>
           `).join("")
         : `<div class="sub">无匹配</div>`;
       searchResults.classList.add("open");
       searchResults.querySelectorAll(".result-item").forEach(item => {
-        item.addEventListener("click", () => revealNode(item.dataset.id));
+        item.addEventListener("click", () => openSearchResult(item.dataset.vocab, item.dataset.id));
       });
+    }
+
+    function searchResultSort(a, b) {
+      const aCurrent = a.vocabId === state.vocab?.id ? 0 : 1;
+      const bCurrent = b.vocabId === state.vocab?.id ? 0 : 1;
+      return aCurrent - bCurrent
+        || (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
+        || (a.vocabOrder ?? 9999) - (b.vocabOrder ?? 9999)
+        || String(a.vocabName).localeCompare(String(b.vocabName), "zh-Hans-CN")
+        || String(a.path).localeCompare(String(b.path), "zh-Hans-CN")
+        || String(a.label).localeCompare(String(b.label), "zh-Hans-CN");
+    }
+
+    function resultMeta(record) {
+      const prefix = record.vocabId === state.vocab?.id ? "本词表" : record.vocabCategory || "本体术语类";
+      return `${prefix} · ${record.vocabName || record.vocabId}`;
+    }
+
+    async function openSearchResult(vocabId, nodeId) {
+      if (state.vocab?.id !== vocabId) {
+        const index = state.index.findIndex(item => item.id === vocabId);
+        if (index < 0) return;
+        await loadVocab(index);
+      }
+      revealNode(nodeId);
     }
 
     function revealNode(id) {
