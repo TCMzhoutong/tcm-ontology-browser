@@ -779,6 +779,7 @@
       state.rendered.clear();
       state.selectedId = null;
       renderTree();
+      expandRootLevel();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
       renderRelated(null);
     }
