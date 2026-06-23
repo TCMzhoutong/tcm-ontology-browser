@@ -584,6 +584,7 @@
       });
       renderStats(meta);
       renderTree();
+      expandRootLevel();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
       renderRelated(null);
     }
@@ -609,6 +610,11 @@
       treeEl.innerHTML = "";
       roots.forEach(id => treeEl.appendChild(renderNode(id, 0)));
       treeStatus.textContent = `${roots.length} 个根节点`;
+    }
+
+    function expandRootLevel() {
+      const roots = state.data.roots || [];
+      roots.forEach(rootId => toggleNode(rootId, true));
     }
 
     function renderNode(id, depth) {
