@@ -439,19 +439,23 @@
       border-radius: 6px;
       cursor: pointer;
       display: grid;
+      grid-template-columns: minmax(96px, 1fr) minmax(80px, 45%);
+      align-items: center;
       gap: 10px;
     }
     .result-item:hover { background: #f0eee7; }
-    .result-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
+    .result-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .result-path {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      word-break: break-word;
+    .result-vocab {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
     }
     @media (max-width: 860px) {
       .app { height: auto; min-height: 100vh; }
@@ -504,7 +508,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260623-global-search";
+    const APP_VERSION = "20260623-compact-search";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -931,11 +935,8 @@
       searchResults.innerHTML = hits.length
         ? hits.map(record => `
             <div class="result-item" data-vocab="${esc(record.vocabId)}" data-id="${esc(record.id)}">
-              <div class="result-title">
-                <span>${esc(record.label)}</span>
-                <span class="sub">${esc(resultMeta(record))}</span>
-              </div>
-              ${record.path ? `<div class="result-path">｜${esc(record.path)}</div>` : ""}
+              <span class="result-label">${esc(record.label)}</span>
+              <span class="sub result-vocab">${esc(resultMeta(record))}</span>
             </div>
           `).join("")
         : `<div class="sub">无匹配</div>`;
@@ -957,8 +958,7 @@
     }
 
     function resultMeta(record) {
-      const prefix = record.vocabId === state.vocab?.id ? "本词表" : record.vocabCategory || "本体术语类";
-      return `${prefix} · ${record.vocabName || record.vocabId}`;
+      return record.vocabId === state.vocab?.id ? `本词表 · ${record.vocabName || record.vocabId}` : record.vocabName || record.vocabId;
     }
 
     async function openSearchResult(vocabId, nodeId) {
