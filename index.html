@@ -116,7 +116,9 @@
       min-height: 32px;
       height: auto;
       width: 100%;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
       align-items: center;
       border: 0;
       border-radius: 6px;
@@ -126,6 +128,18 @@
       color: var(--text);
       white-space: normal;
       line-height: 1.35;
+    }
+    .vocab-option-name {
+      min-width: 0;
+    }
+    .vocab-option-category {
+      align-self: center;
+      border: 1px solid #d6d1c6;
+      border-radius: 999px;
+      padding: 1px 6px;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
     }
     .vocab-option:hover { background: #f0eee7; color: var(--accent); }
     .vocab-option.active {
@@ -480,7 +494,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260623-entity-summary-clean";
+    const APP_VERSION = "20260623-vocab-categories";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -564,7 +578,8 @@
     function renderVocabMenu() {
       vocabMenu.innerHTML = state.index.map((item, idx) => `
         <button class="vocab-option" type="button" role="option" data-index="${idx}" aria-selected="false">
-          ${esc(item.name)}
+          <span class="vocab-option-name">${esc(item.name)}</span>
+          <span class="vocab-option-category">${esc(item.category || "本体术语类")}</span>
         </button>
       `).join("");
       vocabMenu.querySelectorAll(".vocab-option").forEach(option => {
@@ -772,7 +787,7 @@
           <div class="related-section-title">确定相同项</div>
           ${matches.map(item => `
             <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
-              <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
+              <span class="related-vocab">${esc(item.vocabCategory ? `${item.vocabCategory} · ${item.vocabName || item.vocabId}` : item.vocabName || item.vocabId)}</span>
               ${item.matchedTerms?.length ? `<span class="related-match">命中：${esc(item.matchedTerms.join("；"))}</span>` : ""}
               ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
               ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
