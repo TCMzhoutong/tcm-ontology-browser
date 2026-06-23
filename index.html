@@ -236,21 +236,6 @@
       background: #f8f6ef;
       padding: 14px 12px 32px;
     }
-    .related-head {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      margin: -14px -12px 12px;
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(248, 246, 239, .96);
-      backdrop-filter: blur(6px);
-    }
-    .related-head h2 {
-      margin: 0 0 4px;
-      font-size: 15px;
-      line-height: 1.25;
-    }
     .related-list {
       display: grid;
       gap: 8px;
@@ -321,12 +306,6 @@
       border-color: var(--accent);
       color: var(--text);
       background: #fff;
-    }
-    .related-title {
-      font-size: 13px;
-      font-weight: 650;
-      line-height: 1.35;
-      word-break: break-word;
     }
     .related-vocab {
       color: var(--accent);
@@ -494,10 +473,6 @@
         <div class="empty">选择一个节点查看属性</div>
       </section>
       <aside class="related-pane">
-        <div class="related-head">
-          <h2>相关项</h2>
-          <div class="sub" id="relatedStatus">选择一个节点查看同名/异名命中</div>
-        </div>
         <div class="related-list" id="relatedList"></div>
       </aside>
     </main>
@@ -505,7 +480,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260623-entity-summary";
+    const APP_VERSION = "20260623-entity-summary-clean";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -550,7 +525,6 @@
     const treeStatus = document.getElementById("treeStatus");
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
-    const relatedStatus = document.getElementById("relatedStatus");
     const relatedList = document.getElementById("relatedList");
 
     function esc(text) {
@@ -788,19 +762,16 @@
 
     function renderRelated(node) {
       if (!node) {
-        relatedStatus.textContent = "选择一个节点查看同名/异名命中";
         relatedList.innerHTML = "";
         return;
       }
       const matches = state.related[node.id] || [];
-      relatedStatus.textContent = matches.length ? `${matches.length} 个确定性命中` : "暂无完全同名或异名命中";
       relatedList.innerHTML = `
         ${renderEntityCard(node, matches)}
         ${matches.length ? `
           <div class="related-section-title">确定相同项</div>
           ${matches.map(item => `
             <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
-              <span class="related-title">${esc(item.label || item.id)}</span>
               <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
               ${item.matchedTerms?.length ? `<span class="related-match">命中：${esc(item.matchedTerms.join("；"))}</span>` : ""}
               ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
