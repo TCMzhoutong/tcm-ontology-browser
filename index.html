@@ -255,6 +255,56 @@
       display: grid;
       gap: 8px;
     }
+    .related-section-title {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .entity-card {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .entity-card h3 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    .entity-row {
+      display: grid;
+      gap: 3px;
+    }
+    .entity-key {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .entity-value {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .entity-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .entity-tag {
+      max-width: 100%;
+      border: 1px solid #d6d1c6;
+      border-radius: 999px;
+      padding: 2px 7px;
+      background: #fbfaf5;
+      color: #34302a;
+      font-size: 12px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
     .related-item {
       width: 100%;
       height: auto;
@@ -455,7 +505,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260623-exact-related";
+    const APP_VERSION = "20260623-entity-summary";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -744,8 +794,11 @@
       }
       const matches = state.related[node.id] || [];
       relatedStatus.textContent = matches.length ? `${matches.length} 个确定性命中` : "暂无完全同名或异名命中";
-      relatedList.innerHTML = matches.length
-        ? matches.map(item => `
+      relatedList.innerHTML = `
+        ${renderEntityCard(node, matches)}
+        ${matches.length ? `
+          <div class="related-section-title">确定相同项</div>
+          ${matches.map(item => `
             <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
               <span class="related-title">${esc(item.label || item.id)}</span>
               <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
@@ -753,11 +806,85 @@
               ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
               ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
             </button>
-          `).join("")
-        : `<div class="empty">暂无相关项</div>`;
+          `).join("")}
+        ` : `<div class="empty">暂无相关项</div>`}
+      `;
       relatedList.querySelectorAll(".related-item").forEach(item => {
         item.addEventListener("click", () => openRelated(item.dataset.vocab, item.dataset.id));
       });
+    }
+
+    function renderEntityCard(node, matches) {
+      const summary = buildEntitySummary(node, matches);
+      const rows = [
+        ["标准名称", summary.standardName],
+        ["名称集合", summary.names],
+        ["英文名", summary.englishNames],
+        ["拼音名", summary.pinyinNames],
+        ["相关节点", summary.relatedCount ? `${summary.relatedCount} 个确定性命中` : ""],
+      ].filter(([, value]) => Array.isArray(value) ? value.length : String(value || "").trim());
+      return `
+        <section class="entity-card">
+          <h3>标准实体摘要</h3>
+          ${rows.map(([label, value]) => `
+            <div class="entity-row">
+              <div class="entity-key">${esc(label)}</div>
+              ${Array.isArray(value)
+                ? `<div class="entity-tags">${value.slice(0, 36).map(item => `<span class="entity-tag">${esc(item)}</span>`).join("")}</div>`
+                : `<div class="entity-value">${esc(value)}</div>`}
+            </div>
+          `).join("")}
+        </section>
+      `;
+    }
+
+    function buildEntitySummary(node, matches) {
+      const records = [node, ...matches];
+      const rawNames = collectUnique(records, ["conceptName", "preferredName", "label", "aliases", "differentForms", "matchedTerms"]);
+      const latinNames = rawNames.filter(looksLatinTerm);
+      const names = rawNames.filter(value => !looksLatinTerm(value));
+      return {
+        standardName: node.conceptName || node.preferredName || node.label || node.id,
+        names,
+        englishNames: mergeUnique(collectUnique(records, ["englishNames"]), latinNames),
+        pinyinNames: collectUnique(records, ["pinyinNames"]),
+        relatedCount: matches.length,
+      };
+    }
+
+    function collectUnique(records, keys) {
+      const values = [];
+      const seen = new Set();
+      records.forEach(record => {
+        keys.forEach(key => splitValues(record?.[key]).forEach(value => {
+          const normalized = value.replace(/\s+/g, "").toLowerCase();
+          if (!normalized || seen.has(normalized)) return;
+          seen.add(normalized);
+          values.push(value);
+        }));
+      });
+      return values;
+    }
+
+    function mergeUnique(...groups) {
+      const values = [];
+      const seen = new Set();
+      groups.flat().forEach(value => {
+        const normalized = String(value || "").replace(/\s+/g, "").toLowerCase();
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        values.push(value);
+      });
+      return values;
+    }
+
+    function looksLatinTerm(value) {
+      return /[A-Za-z]/.test(String(value || ""));
+    }
+
+    function splitValues(value) {
+      if (Array.isArray(value)) return value.flatMap(item => splitValues(item));
+      return String(value || "").split(/[;；｜|、,，\n]+/).map(item => item.trim()).filter(Boolean);
     }
 
     async function openRelated(vocabId, nodeId) {
