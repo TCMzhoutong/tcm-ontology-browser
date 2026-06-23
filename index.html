@@ -150,10 +150,10 @@
     }
     .main {
       display: grid;
-      grid-template-columns: minmax(320px, 42vw) 1fr;
+      grid-template-columns: minmax(300px, 34vw) minmax(420px, 1fr) minmax(300px, 25vw);
       min-height: 0;
     }
-    .tree-pane, .detail-pane {
+    .tree-pane, .detail-pane, .related-pane {
       min-height: 0;
       overflow: auto;
     }
@@ -230,6 +230,70 @@
     .detail-pane {
       background: var(--panel);
       padding: 18px 22px 40px;
+    }
+    .related-pane {
+      border-left: 1px solid var(--line);
+      background: #f8f6ef;
+      padding: 14px 12px 32px;
+    }
+    .related-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      margin: -14px -12px 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(248, 246, 239, .96);
+      backdrop-filter: blur(6px);
+    }
+    .related-head h2 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+    .related-list {
+      display: grid;
+      gap: 8px;
+    }
+    .related-item {
+      width: 100%;
+      height: auto;
+      display: grid;
+      gap: 5px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      text-align: left;
+      color: var(--text);
+    }
+    .related-item:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: #fff;
+    }
+    .related-title {
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .related-vocab {
+      color: var(--accent);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .related-path, .related-match, .related-definition {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .related-definition {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .detail-head {
       display: flex;
@@ -346,6 +410,7 @@
       }
       .main { grid-template-columns: 1fr; }
       .tree-pane { height: 45vh; border-right: 0; border-bottom: 1px solid var(--line); }
+      .related-pane { border-left: 0; border-top: 1px solid var(--line); }
       .grid { grid-template-columns: 1fr; }
       .key { border-bottom: 0; padding-bottom: 3px; }
       .value { padding-top: 3px; }
@@ -378,12 +443,19 @@
       <section id="detail" class="detail-pane">
         <div class="empty">选择一个节点查看属性</div>
       </section>
+      <aside class="related-pane">
+        <div class="related-head">
+          <h2>相关项</h2>
+          <div class="sub" id="relatedStatus">选择一个节点查看同名/异名命中</div>
+        </div>
+        <div class="related-list" id="relatedList"></div>
+      </aside>
     </main>
   </div>
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260619-field-cleanup";
+    const APP_VERSION = "20260623-exact-related";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -394,6 +466,8 @@
       index: [],
       vocab: null,
       data: null,
+      related: {},
+      relatedCache: new Map(),
       selectedId: null,
       rendered: new Map(),
       expanded: new Set(),
@@ -426,6 +500,8 @@
     const treeStatus = document.getElementById("treeStatus");
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
+    const relatedStatus = document.getElementById("relatedStatus");
+    const relatedList = document.getElementById("relatedList");
 
     function esc(text) {
       return String(text ?? "").replace(/[&<>"']/g, ch => ({
@@ -489,7 +565,12 @@
     async function loadVocab(index) {
       const meta = state.index[index];
       state.vocab = meta;
-      state.data = await fetch(dataUrl(`data/${encodeURIComponent(meta.file)}`), { cache: "no-store" }).then(r => r.json());
+      const [data, related] = await Promise.all([
+        fetch(dataUrl(`data/${encodeURIComponent(meta.file)}`), { cache: "no-store" }).then(r => r.json()),
+        loadRelatedShard(meta.id),
+      ]);
+      state.data = data;
+      state.related = related;
       state.selectedId = null;
       state.rendered.clear();
       state.expanded.clear();
@@ -504,6 +585,16 @@
       renderStats(meta);
       renderTree();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
+      renderRelated(null);
+    }
+
+    async function loadRelatedShard(vocabId) {
+      if (state.relatedCache.has(vocabId)) return state.relatedCache.get(vocabId);
+      const shard = await fetch(dataUrl(`data/related_exact/${encodeURIComponent(vocabId)}.json`), { cache: "no-store" })
+        .then(r => r.ok ? r.json() : {})
+        .catch(() => ({}));
+      state.relatedCache.set(vocabId, shard);
+      return shard;
     }
 
     function renderStats(meta) {
@@ -598,6 +689,7 @@
         state.rendered.get(id).querySelector(".node-row").classList.add("selected");
       }
       renderDetail(state.data.nodes[id]);
+      renderRelated(state.data.nodes[id]);
     }
 
     function badgeClass(value) {
@@ -638,6 +730,39 @@
       `;
     }
 
+    function renderRelated(node) {
+      if (!node) {
+        relatedStatus.textContent = "选择一个节点查看同名/异名命中";
+        relatedList.innerHTML = "";
+        return;
+      }
+      const matches = state.related[node.id] || [];
+      relatedStatus.textContent = matches.length ? `${matches.length} 个确定性命中` : "暂无完全同名或异名命中";
+      relatedList.innerHTML = matches.length
+        ? matches.map(item => `
+            <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
+              <span class="related-title">${esc(item.label || item.id)}</span>
+              <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
+              ${item.matchedTerms?.length ? `<span class="related-match">命中：${esc(item.matchedTerms.join("；"))}</span>` : ""}
+              ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
+              ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
+            </button>
+          `).join("")
+        : `<div class="empty">暂无相关项</div>`;
+      relatedList.querySelectorAll(".related-item").forEach(item => {
+        item.addEventListener("click", () => openRelated(item.dataset.vocab, item.dataset.id));
+      });
+    }
+
+    async function openRelated(vocabId, nodeId) {
+      if (state.vocab?.id !== vocabId) {
+        const index = state.index.findIndex(item => item.id === vocabId);
+        if (index < 0) return;
+        await loadVocab(index);
+      }
+      revealNode(nodeId);
+    }
+
     function fieldLabel(node, key, fallback) {
       if (key === "definitions" && node.definitionsLabel) return node.definitionsLabel;
       return fallback;
@@ -649,6 +774,7 @@
       state.selectedId = null;
       renderTree();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
+      renderRelated(null);
     }
 
     function runSearch() {
