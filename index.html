@@ -567,6 +567,8 @@
       relatedCache: new Map(),
       searchIndex: null,
       selectedId: null,
+      relatedOrder: null,
+      relatedGroup: null,
       rendered: new Map(),
       expanded: new Set(),
     };
@@ -670,6 +672,8 @@
       state.data = data;
       state.related = related;
       state.selectedId = null;
+      state.relatedOrder = null;
+      state.relatedGroup = null;
       state.rendered.clear();
       state.expanded.clear();
       searchInput.value = "";
@@ -745,6 +749,8 @@
 
       row.addEventListener("click", event => {
         event.stopPropagation();
+        state.relatedOrder = null;
+        state.relatedGroup = null;
         selectNode(id);
         if (childIds.length) toggleNode(id);
       });
@@ -842,14 +848,19 @@
       const matches = state.related[node.id] || [];
       const relatedItems = buildRelatedItems(node, matches);
       relatedList.innerHTML = `
-        ${renderEntityCard(node, matches)}
+        ${renderEntityCard(node, relatedItems)}
         ${relatedItems.length ? `
           <div class="related-section-title">实体对齐项</div>
           ${relatedItems.map(renderRelatedItem).join("")}
         ` : `<div class="empty">暂无相关项</div>`}
       `;
       relatedList.querySelectorAll(".related-item").forEach(item => {
-        item.addEventListener("click", () => openRelated(item.dataset.vocab, item.dataset.id));
+        item.addEventListener("click", () => {
+          state.relatedOrder = Array.from(relatedList.querySelectorAll(".related-item"))
+            .map(el => `${el.dataset.vocab || ""}::${el.dataset.id || ""}`);
+          state.relatedGroup = relatedItems.map(item => ({ ...item }));
+          openRelated(item.dataset.vocab, item.dataset.id);
+        });
       });
     }
 
@@ -862,6 +873,12 @@
         vocabCategoryOrder: state.vocab?.categoryOrder ?? 99,
         vocabOrder: state.vocab?.vocabOrder ?? 9999,
         label: node.label || node.conceptName || node.preferredName || node.id,
+        conceptName: node.conceptName || "",
+        preferredName: node.preferredName || "",
+        aliases: node.aliases || "",
+        englishNames: node.englishNames || "",
+        pinyinNames: node.pinyinNames || "",
+        differentForms: node.differentForms || "",
         path: node.lineagePath || "",
         definition: node.definitions || "",
         isCurrent: true,
@@ -869,6 +886,12 @@
       const currentKey = `${current.vocabId || ""}::${current.id || ""}`;
       const items = [];
       const seen = new Set();
+      (state.relatedGroup || []).forEach(item => {
+        const key = `${item.vocabId || ""}::${item.id || ""}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        items.push({ ...item, isCurrent: key === currentKey });
+      });
       matches.forEach(item => {
         const key = `${item.vocabId || ""}::${item.id || ""}`;
         if (seen.has(key)) return;
@@ -876,7 +899,39 @@
         items.push({ ...item, isCurrent: key === currentKey });
       });
       if (!seen.has(currentKey)) items.push(current);
-      return items;
+      if (state.relatedOrder?.length) return applyRelatedOrder(items, currentKey);
+      return items.sort(relatedItemSort);
+    }
+
+    function relatedKey(item) {
+      return `${item.vocabId || ""}::${item.id || ""}`;
+    }
+
+    function applyRelatedOrder(items, currentKey) {
+      if (!state.relatedOrder?.length) return items;
+      const itemMap = new Map(items.map(item => [relatedKey(item), item]));
+      if (!itemMap.has(currentKey)) return items;
+      const ordered = [];
+      state.relatedOrder.forEach(key => {
+        const item = itemMap.get(key);
+        if (!item) return;
+        item.isCurrent = key === currentKey;
+        ordered.push(item);
+        itemMap.delete(key);
+      });
+      itemMap.forEach((item, key) => {
+        item.isCurrent = key === currentKey;
+        ordered.push(item);
+      });
+      return ordered;
+    }
+
+    function relatedItemSort(a, b) {
+      return (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
+        || (a.vocabOrder ?? 9999) - (b.vocabOrder ?? 9999)
+        || String(a.vocabName || a.vocabId).localeCompare(String(b.vocabName || b.vocabId), "zh-Hans-CN")
+        || String(a.path || "").localeCompare(String(b.path || ""), "zh-Hans-CN")
+        || String(a.label || a.conceptName || "").localeCompare(String(b.label || b.conceptName || ""), "zh-Hans-CN");
     }
 
     function renderRelatedItem(item) {
@@ -893,14 +948,14 @@
       `;
     }
 
-    function renderEntityCard(node, matches) {
-      const summary = buildEntitySummary(node, matches);
+    function renderEntityCard(node, relatedItems) {
+      const summary = buildEntitySummary(node, relatedItems);
       const rows = [
         ["标准名称", summary.standardName],
         ["名称集合", summary.names],
         ["英文名", summary.englishNames],
         ["拼音名", summary.pinyinNames],
-        ["相关节点", summary.relatedCount ? `${summary.relatedCount} 个确定性命中` : ""],
+        ["相关节点", summary.relatedCount ? `${summary.relatedCount} 个实体对齐项` : ""],
       ].filter(([, value]) => Array.isArray(value) ? value.length : String(value || "").trim());
       return `
         <section class="entity-card">
@@ -917,8 +972,8 @@
       `;
     }
 
-    function buildEntitySummary(node, matches) {
-      const records = [node, ...matches];
+    function buildEntitySummary(node, relatedItems) {
+      const records = relatedItems?.length ? relatedItems : [node];
       const rawNames = collectUnique(records, ["conceptName", "preferredName", "label", "aliases", "differentForms", "matchedTerms"]);
       const latinNames = rawNames.filter(looksLatinTerm);
       const names = rawNames.filter(value => !looksLatinTerm(value));
@@ -927,7 +982,7 @@
         names,
         englishNames: mergeUnique(collectUnique(records, ["englishNames"]), latinNames),
         pinyinNames: collectUnique(records, ["pinyinNames"]),
-        relatedCount: matches.length,
+        relatedCount: records.length,
       };
     }
 
@@ -967,12 +1022,14 @@
     }
 
     async function openRelated(vocabId, nodeId) {
+      const relatedOrder = state.relatedOrder ? [...state.relatedOrder] : null;
       if (state.vocab?.id !== vocabId) {
         const index = state.index.findIndex(item => item.id === vocabId);
         if (index < 0) return;
         await loadVocab(index);
+        state.relatedOrder = relatedOrder;
       }
-      revealNode(nodeId);
+      revealNode(nodeId, { preserveRelatedOrder: true });
     }
 
     function fieldLabel(node, key, fallback) {
@@ -1045,10 +1102,14 @@
         if (index < 0) return;
         await loadVocab(index);
       }
-      revealNode(nodeId);
+      revealNode(nodeId, { preserveRelatedOrder: false });
     }
 
-    function revealNode(id) {
+    function revealNode(id, options = {}) {
+      if (!options.preserveRelatedOrder) {
+        state.relatedOrder = null;
+        state.relatedGroup = null;
+      }
       const node = state.data.nodes[id];
       if (!node) return;
       const lineage = [];
