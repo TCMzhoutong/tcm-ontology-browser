@@ -859,19 +859,34 @@
         vocabId: state.vocab?.id || "",
         vocabName: state.vocab?.name || node.vocabularyName || "",
         vocabCategory: state.vocab?.category || "",
+        vocabCategoryOrder: state.vocab?.categoryOrder ?? 99,
+        vocabOrder: state.vocab?.vocabOrder ?? 9999,
+        label: node.label || node.conceptName || node.preferredName || node.id,
         path: node.lineagePath || "",
         definition: node.definitions || "",
         isCurrent: true,
       };
-      const seen = new Set([`${current.vocabId}::${current.id}`]);
-      const items = [current];
-      matches.forEach(item => {
+      const seen = new Set();
+      const items = [];
+      const addItem = item => {
         const key = `${item.vocabId || ""}::${item.id || ""}`;
         if (seen.has(key)) return;
         seen.add(key);
-        items.push({ ...item, isCurrent: false });
+        items.push(item);
+      };
+      addItem(current);
+      matches.forEach(item => {
+        addItem({ ...item, isCurrent: false });
       });
-      return items;
+      return items.sort(relatedItemSort);
+    }
+
+    function relatedItemSort(a, b) {
+      return (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
+        || (a.vocabOrder ?? 9999) - (b.vocabOrder ?? 9999)
+        || String(a.vocabName || a.vocabId).localeCompare(String(b.vocabName || b.vocabId), "zh-Hans-CN")
+        || String(a.path || "").localeCompare(String(b.path || ""), "zh-Hans-CN")
+        || String(a.label || a.conceptName || "").localeCompare(String(b.label || b.conceptName || ""), "zh-Hans-CN");
     }
 
     function renderRelatedItem(item) {
