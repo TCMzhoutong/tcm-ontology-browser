@@ -321,6 +321,14 @@
       color: var(--text);
       background: #fff;
     }
+    .related-item.current {
+      border-color: rgba(47, 111, 115, .34);
+      background: #edf5f2;
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .related-item.current:hover {
+      background: #e8f2ef;
+    }
     .related-heading {
       display: flex;
       align-items: flex-start;
@@ -349,6 +357,18 @@
       color: var(--muted);
       font-size: 11px;
       line-height: 1.45;
+    }
+    .related-current {
+      flex: 0 0 auto;
+      border: 1px solid rgba(47, 111, 115, .28);
+      border-radius: 999px;
+      padding: 1px 6px;
+      background: #fff;
+      color: var(--accent);
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 650;
+      white-space: nowrap;
     }
     .related-path, .related-match, .related-definition {
       color: var(--muted);
@@ -820,25 +840,52 @@
         return;
       }
       const matches = state.related[node.id] || [];
+      const relatedItems = buildRelatedItems(node, matches);
       relatedList.innerHTML = `
         ${renderEntityCard(node, matches)}
-        ${matches.length ? `
-          <div class="related-section-title">确定相同项</div>
-          ${matches.map(item => `
-            <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
-              <span class="related-heading">
-                <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
-                ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
-              </span>
-              ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
-              ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
-            </button>
-          `).join("")}
+        ${relatedItems.length ? `
+          <div class="related-section-title">实体对齐项</div>
+          ${relatedItems.map(renderRelatedItem).join("")}
         ` : `<div class="empty">暂无相关项</div>`}
       `;
       relatedList.querySelectorAll(".related-item").forEach(item => {
         item.addEventListener("click", () => openRelated(item.dataset.vocab, item.dataset.id));
       });
+    }
+
+    function buildRelatedItems(node, matches) {
+      const current = {
+        id: node.id,
+        vocabId: state.vocab?.id || "",
+        vocabName: state.vocab?.name || node.vocabularyName || "",
+        vocabCategory: state.vocab?.category || "",
+        path: node.lineagePath || "",
+        definition: node.definitions || "",
+        isCurrent: true,
+      };
+      const seen = new Set([`${current.vocabId}::${current.id}`]);
+      const items = [current];
+      matches.forEach(item => {
+        const key = `${item.vocabId || ""}::${item.id || ""}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        items.push({ ...item, isCurrent: false });
+      });
+      return items;
+    }
+
+    function renderRelatedItem(item) {
+      return `
+        <button class="related-item${item.isCurrent ? " current" : ""}" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
+          <span class="related-heading">
+            <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
+            ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
+            ${item.isCurrent ? `<span class="related-current">当前</span>` : ""}
+          </span>
+          ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
+          ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
+        </button>
+      `;
     }
 
     function renderEntityCard(node, matches) {
