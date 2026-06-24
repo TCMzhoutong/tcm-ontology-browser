@@ -866,27 +866,17 @@
         definition: node.definitions || "",
         isCurrent: true,
       };
-      const seen = new Set();
+      const currentKey = `${current.vocabId || ""}::${current.id || ""}`;
       const items = [];
-      const addItem = item => {
+      const seen = new Set();
+      matches.forEach(item => {
         const key = `${item.vocabId || ""}::${item.id || ""}`;
         if (seen.has(key)) return;
         seen.add(key);
-        items.push(item);
-      };
-      addItem(current);
-      matches.forEach(item => {
-        addItem({ ...item, isCurrent: false });
+        items.push({ ...item, isCurrent: key === currentKey });
       });
-      return items.sort(relatedItemSort);
-    }
-
-    function relatedItemSort(a, b) {
-      return (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
-        || (a.vocabOrder ?? 9999) - (b.vocabOrder ?? 9999)
-        || String(a.vocabName || a.vocabId).localeCompare(String(b.vocabName || b.vocabId), "zh-Hans-CN")
-        || String(a.path || "").localeCompare(String(b.path || ""), "zh-Hans-CN")
-        || String(a.label || a.conceptName || "").localeCompare(String(b.label || b.conceptName || ""), "zh-Hans-CN");
+      if (!seen.has(currentKey)) items.push(current);
+      return items;
     }
 
     function renderRelatedItem(item) {
