@@ -308,8 +308,8 @@
       width: 100%;
       height: auto;
       display: grid;
-      gap: 5px;
-      padding: 9px;
+      gap: 6px;
+      padding: 10px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fffefa;
@@ -321,10 +321,34 @@
       color: var(--text);
       background: #fff;
     }
+    .related-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
     .related-vocab {
-      color: var(--accent);
-      font-size: 12px;
+      min-width: 0;
+      flex: 1;
+      color: #244f51;
+      font-size: 13px;
+      font-weight: 650;
       line-height: 1.35;
+      word-break: break-word;
+    }
+    .related-category {
+      flex: 0 0 auto;
+      max-width: 42%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border: 1px solid #d6d1c6;
+      border-radius: 999px;
+      padding: 1px 6px;
+      background: #fbfaf5;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
     }
     .related-path, .related-match, .related-definition {
       color: var(--muted);
@@ -802,8 +826,10 @@
           <div class="related-section-title">确定相同项</div>
           ${matches.map(item => `
             <button class="related-item" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
-              <span class="related-vocab">${esc(item.vocabCategory ? `${item.vocabCategory} · ${item.vocabName || item.vocabId}` : item.vocabName || item.vocabId)}</span>
-              ${item.matchedTerms?.length ? `<span class="related-match">命中：${esc(item.matchedTerms.join("；"))}</span>` : ""}
+              <span class="related-heading">
+                <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
+                ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
+              </span>
               ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
               ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
             </button>
