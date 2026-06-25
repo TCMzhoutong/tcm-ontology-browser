@@ -952,6 +952,7 @@
     }
 
     function renderRelatedItem(item) {
+      const path = displayRelatedPath(item);
       return `
         <button class="related-item${item.isCurrent ? " current" : ""}" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
           <span class="related-heading">
@@ -959,10 +960,19 @@
             ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
             ${item.isCurrent ? `<span class="related-current">当前</span>` : ""}
           </span>
-          ${item.path ? `<span class="related-path">${esc(item.path)}</span>` : ""}
+          ${path ? `<span class="related-path">${esc(path)}</span>` : ""}
           ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
         </button>
       `;
+    }
+
+    function displayRelatedPath(item) {
+      const path = String(item.path || "").trim();
+      const vocabName = String(item.vocabName || "").trim();
+      if (!path || !vocabName) return path;
+      const parts = path.split("｜").map(part => part.trim()).filter(Boolean);
+      if (parts[0] === vocabName) return parts.slice(1).join("｜");
+      return path;
     }
 
     function renderEntityCard(node, relatedItems) {
