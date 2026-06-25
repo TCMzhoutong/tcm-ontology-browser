@@ -210,21 +210,31 @@
     "roots": 1
   },
   {
-    "id": "V011",
-    "name": "TCIATCM 098-2023 中医药文本数据命名实体信息分类与代码",
+    "id": "V024",
+    "name": "T/CIATCM 020-2025 中医临床基本症状信息分类与代码",
     "category": "标注标准类",
     "categoryOrder": 4,
     "vocabOrder": 0,
+    "file": "V024.json",
+    "nodes": 4383,
+    "roots": 1
+  },
+  {
+    "id": "V011",
+    "name": "T/CIATCM 098-2023 中医药文本数据命名实体信息分类与代码",
+    "category": "标注标准类",
+    "categoryOrder": 4,
+    "vocabOrder": 1,
     "file": "V011.json",
     "nodes": 70,
     "roots": 1
   },
   {
     "id": "V012",
-    "name": "TCIATCM 099-2023 中医药文本数据关系信息分类与代码",
+    "name": "T/CIATCM 099-2023 中医药文本数据关系信息分类与代码",
     "category": "标注标准类",
     "categoryOrder": 4,
-    "vocabOrder": 1,
+    "vocabOrder": 2,
     "file": "V012.json",
     "nodes": 17,
     "roots": 1
