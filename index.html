@@ -1023,11 +1023,13 @@
 
     async function openRelated(vocabId, nodeId) {
       const relatedOrder = state.relatedOrder ? [...state.relatedOrder] : null;
+      const relatedGroup = state.relatedGroup ? state.relatedGroup.map(item => ({ ...item })) : null;
       if (state.vocab?.id !== vocabId) {
         const index = state.index.findIndex(item => item.id === vocabId);
         if (index < 0) return;
         await loadVocab(index);
         state.relatedOrder = relatedOrder;
+        state.relatedGroup = relatedGroup;
       }
       revealNode(nodeId, { preserveRelatedOrder: true });
     }
