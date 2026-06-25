@@ -569,7 +569,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260625-related-path-normalize";
+    const APP_VERSION = "20260625-related-path-normalize-2";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -979,8 +979,8 @@
 
     function normalizePathLabel(value) {
       return String(value || "")
-        .replace(/gb\\s*[tT]/gi, "GBT")
-        .replace(/[\\s\\-－—_/／、，,：:（）()《》〈〉\\[\\]【】]/g, "")
+        .replace(/gb\s*[tT]/gi, "GBT")
+        .replace(/[\s\-－—_/／、，,：:（）()《》〈〉\[\]【】]/g, "")
         .toLowerCase();
     }
 
