@@ -605,7 +605,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260625-gbt31774-fields";
+    const APP_VERSION = "20260625-standard-name-priority";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -1070,12 +1070,35 @@
       const latinNames = rawNames.filter(looksLatinTerm);
       const names = rawNames.filter(value => !looksLatinTerm(value));
       return {
-        standardName: node.conceptName || node.preferredName || node.label || node.id,
+        standardName: chooseStandardName(node, records),
         names,
         englishNames: mergeUnique(collectUnique(records, ["englishNames"]), latinNames),
         pinyinNames: collectUnique(records, ["pinyinNames"]),
         relatedCount: records.length,
       };
+    }
+
+    function chooseStandardName(node, records) {
+      const candidates = (records?.length ? records : [node])
+        .map(record => ({
+          name: record?.conceptName || record?.preferredName || record?.label || record?.id || "",
+          priority: standardNamePriority(record),
+          order: record?.vocabOrder ?? 9999,
+        }))
+        .filter(item => String(item.name || "").trim());
+      if (!candidates.length) return node.conceptName || node.preferredName || node.label || node.id;
+      candidates.sort((a, b) => a.priority - b.priority
+        || a.order - b.order
+        || String(a.name).localeCompare(String(b.name), "zh-Hans-CN"));
+      return candidates[0].name;
+    }
+
+    function standardNamePriority(record) {
+      const name = normalizePathLabel(record?.vocabName || "");
+      if (name.includes("GBT16751")) return 0;
+      if (name.includes("GBT42467")) return 1;
+      if (name.includes("GBT31773")) return 2;
+      return 10;
     }
 
     function collectUnique(records, keys) {
