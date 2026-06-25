@@ -180,6 +180,26 @@
     "roots": 1
   },
   {
+    "id": "V024",
+    "name": "T/CIATCM 020-2025 中医临床基本症状信息分类与代码",
+    "category": "代码类",
+    "categoryOrder": 2,
+    "vocabOrder": 2,
+    "file": "V024.json",
+    "nodes": 3969,
+    "roots": 1
+  },
+  {
+    "id": "V025",
+    "name": "T/CIATCM 104-2023 张仲景经方传承信息基本数据集",
+    "category": "代码类",
+    "categoryOrder": 2,
+    "vocabOrder": 3,
+    "file": "V025.json",
+    "nodes": 724,
+    "roots": 1
+  },
+  {
     "id": "V013",
     "name": "WHO international standard terminologies on TCM",
     "category": "翻译类",
@@ -210,21 +230,11 @@
     "roots": 1
   },
   {
-    "id": "V024",
-    "name": "T/CIATCM 020-2025 中医临床基本症状信息分类与代码",
-    "category": "标注标准类",
-    "categoryOrder": 4,
-    "vocabOrder": 0,
-    "file": "V024.json",
-    "nodes": 4383,
-    "roots": 1
-  },
-  {
     "id": "V011",
     "name": "T/CIATCM 098-2023 中医药文本数据命名实体信息分类与代码",
     "category": "标注标准类",
     "categoryOrder": 4,
-    "vocabOrder": 1,
+    "vocabOrder": 0,
     "file": "V011.json",
     "nodes": 70,
     "roots": 1
@@ -234,19 +244,9 @@
     "name": "T/CIATCM 099-2023 中医药文本数据关系信息分类与代码",
     "category": "标注标准类",
     "categoryOrder": 4,
-    "vocabOrder": 2,
+    "vocabOrder": 1,
     "file": "V012.json",
     "nodes": 17,
-    "roots": 1
-  },
-  {
-    "id": "V025",
-    "name": "T/CIATCM 104-2023 张仲景经方传承信息基本数据集",
-    "category": "标注标准类",
-    "categoryOrder": 4,
-    "vocabOrder": 3,
-    "file": "V025.json",
-    "nodes": 724,
     "roots": 1
   }
 ]
