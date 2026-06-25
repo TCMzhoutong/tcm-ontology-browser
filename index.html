@@ -569,7 +569,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260625-related-path-trim";
+    const APP_VERSION = "20260625-related-path-normalize";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -969,8 +969,19 @@
     function displayRelatedPath(item) {
       const path = String(item.path || "").trim();
       if (!path) return path;
+      const vocabName = String(item.vocabName || "").trim();
       const parts = path.split("｜").map(part => part.trim()).filter(Boolean);
-      return parts.length > 1 ? parts.slice(1).join("｜") : "";
+      if (parts.length > 1 && normalizePathLabel(parts[0]) === normalizePathLabel(vocabName)) {
+        return parts.slice(1).join("｜");
+      }
+      return path;
+    }
+
+    function normalizePathLabel(value) {
+      return String(value || "")
+        .replace(/gb\\s*[tT]/gi, "GBT")
+        .replace(/[\\s\\-－—_/／、，,：:（）()《》〈〉\\[\\]【】]/g, "")
+        .toLowerCase();
     }
 
     function renderEntityCard(node, relatedItems) {
