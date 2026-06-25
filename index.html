@@ -388,6 +388,16 @@
       line-height: 1.45;
       word-break: break-word;
     }
+    .related-path .path-display {
+      gap: 3px;
+    }
+    .related-path .path-segment {
+      color: #746d61;
+    }
+    .related-path .path-separator {
+      color: #8a7a59;
+      opacity: .82;
+    }
     .related-item.current .related-path {
       border-color: rgba(47, 111, 115, .18);
       background: rgba(255, 255, 255, .62);
@@ -451,6 +461,32 @@
       min-width: 0;
       word-break: break-word;
       white-space: pre-wrap;
+    }
+    .path-display {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      white-space: normal;
+    }
+    .path-segment {
+      color: #34302a;
+    }
+    .path-separator {
+      color: var(--accent);
+      font-weight: 650;
+      opacity: .72;
+      padding: 0 1px;
+    }
+    .value .path-display {
+      row-gap: 5px;
+    }
+    .value .path-segment {
+      border: 1px solid #e2ddd3;
+      border-radius: 999px;
+      padding: 2px 7px;
+      background: #fbfaf5;
+      line-height: 1.45;
     }
     .grid .key:last-of-type, .grid .value:last-child { border-bottom: 0; }
     .evidence-images {
@@ -569,7 +605,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260625-related-path-normalize-2";
+    const APP_VERSION = "20260625-path-separators";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -840,7 +876,7 @@
         <div class="grid">
           ${visibleFields.map(([key, label]) => `
             <div class="key">${esc(fieldLabel(node, key, label))}</div>
-            <div class="value">${esc(node[key] || "")}</div>
+            <div class="value">${renderFieldValue(key, node[key])}</div>
           `).join("")}
         </div>
         ${imagePaths.length ? `
@@ -960,10 +996,25 @@
             ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
             ${item.isCurrent ? `<span class="related-current">当前</span>` : ""}
           </span>
-          ${path ? `<span class="related-path">${esc(path)}</span>` : ""}
+          ${path ? `<span class="related-path">${renderPath(path, { compact: true })}</span>` : ""}
           ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
         </button>
       `;
+    }
+
+    function renderFieldValue(key, value) {
+      if (key === "lineagePath") return renderPath(value);
+      return esc(value || "");
+    }
+
+    function renderPath(value, options = {}) {
+      const parts = String(value || "").split(/[｜|]/).map(part => part.trim()).filter(Boolean);
+      if (!parts.length) return "";
+      const separator = options.compact ? "›" : "›";
+      return `<span class="path-display">${parts.map((part, idx) => `
+        ${idx ? `<span class="path-separator">${separator}</span>` : ""}
+        <span class="path-segment">${esc(part)}</span>
+      `).join("")}</span>`;
     }
 
     function displayRelatedPath(item) {
