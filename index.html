@@ -968,11 +968,9 @@
 
     function displayRelatedPath(item) {
       const path = String(item.path || "").trim();
-      const vocabName = String(item.vocabName || "").trim();
-      if (!path || !vocabName) return path;
+      if (!path) return path;
       const parts = path.split("｜").map(part => part.trim()).filter(Boolean);
-      if (parts[0] === vocabName) return parts.slice(1).join("｜");
-      return path;
+      return parts.length > 1 ? parts.slice(1).join("｜") : "";
     }
 
     function renderEntityCard(node, relatedItems) {
