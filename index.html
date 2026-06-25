@@ -605,7 +605,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260625-gbt31773-rebuild";
+    const APP_VERSION = "20260625-related-fresh-items";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -924,7 +924,6 @@
         item.addEventListener("click", () => {
           state.relatedOrder = Array.from(relatedList.querySelectorAll(".related-item"))
             .map(el => `${el.dataset.vocab || ""}::${el.dataset.id || ""}`);
-          state.relatedGroup = relatedItems.map(item => ({ ...item }));
           openRelated(item.dataset.vocab, item.dataset.id);
         });
       });
@@ -947,17 +946,16 @@
         differentForms: node.differentForms || "",
         path: node.lineagePath || "",
         definition: node.definitions || "",
+        formulaSource: node.formulaSource || "",
+        formulaComposition: node.formulaComposition || "",
+        formulaEfficacy: node.formulaEfficacy || "",
+        formulaIndications: node.formulaIndications || "",
+        formulaRemark: node.formulaRemark || "",
         isCurrent: true,
       };
       const currentKey = `${current.vocabId || ""}::${current.id || ""}`;
       const items = [];
       const seen = new Set();
-      (state.relatedGroup || []).forEach(item => {
-        const key = `${item.vocabId || ""}::${item.id || ""}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        items.push({ ...item, isCurrent: key === currentKey });
-      });
       matches.forEach(item => {
         const key = `${item.vocabId || ""}::${item.id || ""}`;
         if (seen.has(key)) return;
@@ -1002,6 +1000,7 @@
 
     function renderRelatedItem(item) {
       const path = displayRelatedPath(item);
+      const summary = relatedItemSummary(item);
       return `
         <button class="related-item${item.isCurrent ? " current" : ""}" type="button" data-vocab="${esc(item.vocabId)}" data-id="${esc(item.id)}">
           <span class="related-heading">
@@ -1010,9 +1009,20 @@
             ${item.isCurrent ? `<span class="related-current">当前</span>` : ""}
           </span>
           ${path ? `<span class="related-path">${renderPath(path, { compact: true })}</span>` : ""}
-          ${item.definition ? `<span class="related-definition">${esc(item.definition)}</span>` : ""}
+          ${summary ? `<span class="related-definition">${esc(summary)}</span>` : ""}
         </button>
       `;
+    }
+
+    function relatedItemSummary(item) {
+      if (item.definition) return item.definition;
+      const parts = [
+        item.formulaSource ? `来源：${item.formulaSource}` : "",
+        item.formulaComposition ? `组成：${item.formulaComposition}` : "",
+        item.formulaEfficacy ? `功效：${item.formulaEfficacy}` : "",
+        item.formulaIndications ? `主治：${item.formulaIndications}` : "",
+      ].filter(Boolean);
+      return parts.join("；");
     }
 
     function renderFieldValue(key, value) {
@@ -1146,13 +1156,11 @@
 
     async function openRelated(vocabId, nodeId) {
       const relatedOrder = state.relatedOrder ? [...state.relatedOrder] : null;
-      const relatedGroup = state.relatedGroup ? state.relatedGroup.map(item => ({ ...item })) : null;
       if (state.vocab?.id !== vocabId) {
         const index = state.index.findIndex(item => item.id === vocabId);
         if (index < 0) return;
         await loadVocab(index);
         state.relatedOrder = relatedOrder;
-        state.relatedGroup = relatedGroup;
       }
       revealNode(nodeId, { preserveRelatedOrder: true });
     }
