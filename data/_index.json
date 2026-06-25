@@ -140,16 +140,6 @@
     "roots": 1
   },
   {
-    "id": "V021",
-    "name": "传统医学名词术语国际标准",
-    "category": "本体术语类",
-    "categoryOrder": 0,
-    "vocabOrder": 21,
-    "file": "V021.json",
-    "nodes": 2826,
-    "roots": 1
-  },
-  {
     "id": "V022",
     "name": "简帛医药文献词典（2018）（未校勘）",
     "category": "简帛医学类",
@@ -197,6 +187,16 @@
     "vocabOrder": 1,
     "file": "V013.json",
     "nodes": 6286,
+    "roots": 1
+  },
+  {
+    "id": "V021",
+    "name": "传统医学名词术语国际标准",
+    "category": "翻译类",
+    "categoryOrder": 3,
+    "vocabOrder": 21,
+    "file": "V021.json",
+    "nodes": 2826,
     "roots": 1
   },
   {
