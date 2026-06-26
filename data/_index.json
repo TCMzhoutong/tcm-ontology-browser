@@ -31,12 +31,12 @@
   },
   {
     "id": "V005",
-    "name": "GBT20348-2006-中医基础理论术语",
+    "name": "GBT20348-2026-中医基础理论术语",
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 3,
     "file": "V005.json",
-    "nodes": 1141,
+    "nodes": 1199,
     "roots": 1
   },
   {

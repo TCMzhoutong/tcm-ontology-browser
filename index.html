@@ -605,7 +605,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260626-gbt167513-rebuild";
+    const APP_VERSION = "20260626-gbt20348-2026";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -667,7 +667,7 @@
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
     const relatedList = document.getElementById("relatedList");
-    const DATA_BUILD = "167513v1";
+    const DATA_BUILD = "20348v1";
 
     function esc(text) {
       return String(text ?? "").replace(/[&<>"']/g, ch => ({
@@ -760,9 +760,7 @@
 
     async function loadRelatedShard(vocabId) {
       if (state.relatedCache.has(vocabId)) return state.relatedCache.get(vocabId);
-      const meta = state.index.find(item => item.id === vocabId);
-      const relatedFile = meta?.relatedFile || `related_exact/${encodeURIComponent(vocabId)}.json`;
-      const shard = await fetch(dataUrl(`data/${relatedFile}`), { cache: "no-store" })
+      const shard = await fetch(dataUrl(`data/related_exact/${encodeURIComponent(vocabId)}.json`), { cache: "no-store" })
         .then(r => r.ok ? r.json() : {})
         .catch(() => ({}));
       state.relatedCache.set(vocabId, shard);
