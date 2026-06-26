@@ -191,12 +191,12 @@
   },
   {
     "id": "V025",
-    "name": "T/CIATCM 104-2023 张仲景经方传承信息基本数据集",
+    "name": "T/CIATCM 104-2023（表14-表27）张仲景经方术语代码表",
     "category": "代码类",
     "categoryOrder": 2,
     "vocabOrder": 3,
     "file": "V025.json",
-    "nodes": 724,
+    "nodes": 723,
     "roots": 1
   },
   {
