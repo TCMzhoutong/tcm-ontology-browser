@@ -674,8 +674,10 @@
       }[ch]));
     }
 
+    const DATA_BUILD = "e44d40e";
+
     async function init() {
-      state.index = await fetch(dataUrl("data/_index.json"), { cache: "no-store" }).then(r => r.json());
+      state.index = await fetch(dataUrl(`data/_index.${DATA_BUILD}.json`), { cache: "no-store" }).then(r => r.json());
       document.body.appendChild(vocabMenu);
       renderVocabMenu();
       vocabButton.addEventListener("click", event => {
@@ -759,7 +761,9 @@
 
     async function loadRelatedShard(vocabId) {
       if (state.relatedCache.has(vocabId)) return state.relatedCache.get(vocabId);
-      const shard = await fetch(dataUrl(`data/related_exact/${encodeURIComponent(vocabId)}.json`), { cache: "no-store" })
+      const meta = state.index.find(item => item.id === vocabId);
+      const relatedFile = meta?.relatedFile || `related_exact/${encodeURIComponent(vocabId)}.json`;
+      const shard = await fetch(dataUrl(`data/${relatedFile}`), { cache: "no-store" })
         .then(r => r.ok ? r.json() : {})
         .catch(() => ({}));
       state.relatedCache.set(vocabId, shard);
@@ -1183,7 +1187,7 @@
 
     async function loadSearchIndex() {
       if (state.searchIndex) return state.searchIndex;
-      state.searchIndex = await fetch(dataUrl("data/search_index.json"), { cache: "no-store" }).then(r => r.json());
+      state.searchIndex = await fetch(dataUrl(`data/search_index.${DATA_BUILD}.json`), { cache: "no-store" }).then(r => r.json());
       return state.searchIndex;
     }
 
