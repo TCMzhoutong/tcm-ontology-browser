@@ -605,7 +605,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260626-tciatcm104-terms";
+    const APP_VERSION = "20260626-standard-name-tciatcm020";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -1116,6 +1116,7 @@
       if (name.includes("GBT16751")) return 0;
       if (name.includes("GBT42467")) return 1;
       if (name.includes("GBT31773")) return 2;
+      if (name.includes("TCIATCM0202025") || name.includes("T/CIATCM 020-2025")) return 3;
       return 10;
     }
 
