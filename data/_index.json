@@ -101,32 +101,12 @@
   },
   {
     "id": "V015",
-    "name": "中医药学名词-内科学等（2010）",
+    "name": "中医药学名词（2004、2011、2013）",
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 10,
     "file": "V015.json",
-    "nodes": 504,
-    "roots": 1
-  },
-  {
-    "id": "V016",
-    "name": "中医药学名词-外科学等（2013）",
-    "category": "本体术语类",
-    "categoryOrder": 0,
-    "vocabOrder": 11,
-    "file": "V016.json",
-    "nodes": 897,
-    "roots": 1
-  },
-  {
-    "id": "V017",
-    "name": "中医药学名词（2004）",
-    "category": "本体术语类",
-    "categoryOrder": 0,
-    "vocabOrder": 12,
-    "file": "V017.json",
-    "nodes": 5131,
+    "nodes": 9829,
     "roots": 1
   },
   {
@@ -134,7 +114,7 @@
     "name": "中国中医药学主题词表",
     "category": "本体术语类",
     "categoryOrder": 0,
-    "vocabOrder": 13,
+    "vocabOrder": 11,
     "file": "V018.json",
     "nodes": 8453,
     "roots": 1
@@ -144,7 +124,7 @@
     "name": "中药成方制剂-v2.0",
     "category": "本体术语类",
     "categoryOrder": 0,
-    "vocabOrder": 14,
+    "vocabOrder": 12,
     "file": "V019.json",
     "nodes": 3949,
     "roots": 1
@@ -154,7 +134,7 @@
     "name": "中药材正名词典",
     "category": "本体术语类",
     "categoryOrder": 0,
-    "vocabOrder": 15,
+    "vocabOrder": 13,
     "file": "V020.json",
     "nodes": 5884,
     "roots": 1
@@ -164,7 +144,7 @@
     "name": "临床术语",
     "category": "本体术语类",
     "categoryOrder": 0,
-    "vocabOrder": 16,
+    "vocabOrder": 14,
     "file": "V021.json",
     "nodes": 37069,
     "roots": 1
