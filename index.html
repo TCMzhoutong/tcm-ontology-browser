@@ -178,26 +178,57 @@
     .tree-toolbar {
       position: sticky;
       top: 0;
-      z-index: 2;
-      display: flex;
-      justify-content: space-between;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 8px;
       padding: 8px 10px;
       border-bottom: 1px solid var(--line);
-      background: rgba(251, 250, 245, .96);
+      background: #fbfaf5;
       backdrop-filter: blur(6px);
       color: var(--muted);
       font-size: 12px;
+      box-shadow: 0 1px 0 rgba(42, 36, 24, .03);
+    }
+    .side-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .side-tab {
+      height: 28px;
+      padding: 0 10px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      border-radius: 4px;
+    }
+    .side-tab.active {
+      border-color: #cddfdc;
+      background: var(--accent-soft);
+      color: #0f4d47;
+    }
+    .tree-status {
+      margin-left: 6px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      align-self: center;
+      font-weight: 500;
     }
     .tree-actions {
       display: flex;
       gap: 6px;
       flex: 0 0 auto;
     }
+    .tree-actions[hidden] { display: none; }
     button {
       height: 28px;
       border: 1px solid var(--line);
-      border-radius: 6px;
+      border-radius: 4px;
       background: #fff;
       color: var(--text);
       cursor: pointer;
@@ -209,13 +240,15 @@
     .tree {
       padding: 8px 4px 24px;
     }
+    .side-view { display: none; }
+    .side-view.active { display: block; }
     .node-row {
       display: grid;
       grid-template-columns: 30px 1fr auto;
       align-items: center;
       min-height: 30px;
-      border-radius: 6px;
-      margin: 1px 4px;
+      border-radius: 4px;
+      margin: 0 4px;
       padding-right: 8px;
       cursor: pointer;
     }
@@ -224,6 +257,7 @@
       background: var(--accent-soft);
       color: #0f4d47;
       font-weight: 600;
+      box-shadow: inset 3px 0 0 var(--accent);
     }
     .twisty {
       width: 28px;
@@ -564,34 +598,147 @@
       text-align: center;
     }
     .search-results {
-      display: none;
       padding: 8px;
-      border-bottom: 1px solid var(--line);
-      background: #fff;
     }
-    .search-results.open { display: block; }
+    .search-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 3px 4px 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .search-results-list {
+      display: grid;
+      gap: 2px;
+    }
     .result-item {
-      padding: 6px 8px;
-      border-radius: 6px;
+      width: 100%;
+      height: auto;
+      padding: 8px 7px;
+      border: 0;
+      border-bottom: 1px solid #ebe6dc;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
       cursor: pointer;
       display: grid;
-      grid-template-columns: minmax(96px, 1fr) minmax(80px, 45%);
-      align-items: center;
-      gap: 10px;
+      gap: 5px;
+      text-align: left;
     }
-    .result-item:hover { background: #f0eee7; }
+    .result-item:hover {
+      color: var(--text);
+      background: #f3f1ea;
+    }
+    .result-item.active {
+      background: #edf5f2;
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
     .result-label {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
       min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      color: #244f51;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      word-break: break-word;
     }
-    .result-vocab {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      text-align: right;
+    .result-vocab-tag {
+      display: inline-block;
+      max-width: 100%;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    .result-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .result-pill {
+      border: 1px solid #d8d2c6;
+      border-radius: 4px;
+      padding: 0 5px;
+      background: #f7f5ef;
+      color: #6d6457;
+    }
+    .result-context {
+      color: #6f685d;
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .result-context .result-pill {
+      display: inline-block;
+      margin-right: 5px;
+      color: #6f685d;
+      vertical-align: baseline;
+    }
+    .search-group {
+      display: block;
+    }
+    .search-group + .search-group {
+      margin-top: 10px;
+    }
+    .search-group summary {
+      position: sticky;
+      top: 45px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 5px;
+      margin: 10px 0 5px;
+      padding: 7px 8px;
+      border-top: 1px solid #e4ded3;
+      border-bottom: 1px solid #d7d0c3;
+      background: #ede9df;
+      backdrop-filter: blur(4px);
+      color: #2f4f50;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13.5px;
+      font-weight: 750;
+      list-style: none;
+    }
+    .search-group summary::-webkit-details-marker { display: none; }
+    .search-group summary::marker { content: ""; }
+    .search-group summary::before {
+      content: "▸";
+      color: var(--accent);
+      width: 16px;
+      flex: 0 0 16px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .search-group[open] summary::before {
+      content: "▾";
+    }
+    .search-group-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+    }
+    .search-group-body {
+      display: grid;
+      gap: 7px;
+      padding: 0;
+    }
+    mark.hit {
+      padding: 0 1px;
+      border-radius: 3px;
+      background: #ffe0dc;
+      color: #b21f1f;
+      font-weight: 700;
     }
     @media (max-width: 860px) {
       .app { height: auto; min-height: 100vh; }
@@ -620,19 +767,35 @@
         </button>
       </div>
       <div class="stats" id="stats"></div>
-      <input id="searchInput" placeholder="搜索概念名 / ID / 异名" />
+      <input id="searchInput" placeholder="全库检索标准实体、异名、英文名、定义" />
     </header>
     <main class="main">
       <section class="tree-pane">
         <div class="tree-toolbar">
-          <span id="treeStatus">加载中</span>
-          <span class="tree-actions">
-            <button id="collapseLevelBtn" title="保留根节点展开，只收起更深层级">收至一级</button>
+          <span class="side-tabs">
+            <button id="treeTab" class="side-tab active" type="button">目录</button>
+            <button id="searchTab" class="side-tab" type="button">检索</button>
+            <span id="treeStatus" class="tree-status">加载中</span>
+          </span>
+          <span id="treeActions" class="tree-actions">
+            <button id="locateCurrentBtn" title="在目录中展开并定位当前概念">定位</button>
+            <button id="collapseLevelBtn" title="保留根节点展开，只收起更深层级">收起</button>
             <button id="collapseCurrentBtn" title="按当前展开深度收起最深一层">收起一级</button>
           </span>
+          <span id="searchActions" class="tree-actions" hidden>
+            <button id="locateFromSearchBtn" title="回到检索框位置">定位</button>
+            <button id="expandSearchGroupsBtn" title="展开全部检索分组">展开</button>
+            <button id="collapseSearchGroupsBtn" title="收起全部检索分组">收起</button>
+          </span>
         </div>
-        <div id="searchResults" class="search-results"></div>
-        <div id="tree" class="tree"></div>
+        <div id="treePanel" class="side-view active">
+          <div id="tree" class="tree"></div>
+        </div>
+        <div id="searchPanel" class="side-view">
+          <div id="searchResults" class="search-results">
+            <div class="empty">输入关键词检索全库标准实体</div>
+          </div>
+        </div>
       </section>
       <section id="detail" class="detail-pane">
         <div class="empty">选择一个节点查看属性</div>
@@ -645,7 +808,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-tciatcm020-pdf-order";
+    const APP_VERSION = "20260627-search-groups-polish";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -659,6 +822,11 @@
       related: {},
       relatedCache: new Map(),
       searchIndex: null,
+      searchQuery: "",
+      searchGroups: [],
+      searchOpenSections: {},
+      activeSearchKey: "",
+      sidePanel: "tree",
       selectedId: null,
       relatedOrder: null,
       relatedGroup: null,
@@ -702,8 +870,14 @@
     const vocabMenu = document.getElementById("vocabMenu");
     const statsEl = document.getElementById("stats");
     const treeEl = document.getElementById("tree");
+    const treePanel = document.getElementById("treePanel");
+    const searchPanel = document.getElementById("searchPanel");
+    const treeTab = document.getElementById("treeTab");
+    const searchTab = document.getElementById("searchTab");
     const detailEl = document.getElementById("detail");
     const treeStatus = document.getElementById("treeStatus");
+    const treeActions = document.getElementById("treeActions");
+    const searchActions = document.getElementById("searchActions");
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
     const relatedList = document.getElementById("relatedList");
@@ -739,8 +913,25 @@
       });
       document.getElementById("collapseLevelBtn").addEventListener("click", collapseToRootLevel);
       document.getElementById("collapseCurrentBtn").addEventListener("click", collapseOneLevel);
+      document.getElementById("locateCurrentBtn").addEventListener("click", locateCurrentNode);
+      document.getElementById("locateFromSearchBtn").addEventListener("click", locateSearchBox);
+      document.getElementById("expandSearchGroupsBtn").addEventListener("click", () => setSearchGroupsOpen(true));
+      document.getElementById("collapseSearchGroupsBtn").addEventListener("click", () => setSearchGroupsOpen(false));
+      treeTab.addEventListener("click", () => switchSidePanel("tree"));
+      searchTab.addEventListener("click", () => switchSidePanel("search"));
       searchInput.addEventListener("input", debounce(runSearch, 180));
       await loadVocab(0);
+    }
+
+    function switchSidePanel(panel) {
+      state.sidePanel = panel === "search" ? "search" : "tree";
+      const searchActive = state.sidePanel === "search";
+      treeTab.classList.toggle("active", !searchActive);
+      searchTab.classList.toggle("active", searchActive);
+      treePanel.classList.toggle("active", !searchActive);
+      searchPanel.classList.toggle("active", searchActive);
+      treeActions.hidden = searchActive;
+      searchActions.hidden = !searchActive;
     }
 
     function renderVocabMenu() {
@@ -769,8 +960,13 @@
       vocabMenu.style.top = `${rect.bottom + 6}px`;
     }
 
-    async function loadVocab(index) {
+    async function loadVocab(index, options = {}) {
       const meta = state.index[index];
+      const preservedSearchQuery = state.searchQuery;
+      const preservedSearchGroups = state.searchGroups;
+      const preservedActiveSearchKey = state.activeSearchKey;
+      const preservedSearchOpenSections = state.searchOpenSections;
+      const preserveSearch = Boolean(options.preserveSearch);
       state.vocab = meta;
       const [data, related] = await Promise.all([
         fetch(dataUrl(`data/${encodeURIComponent(meta.file)}`), { cache: "no-store" }).then(r => r.json()),
@@ -783,8 +979,20 @@
       state.relatedGroup = null;
       state.rendered.clear();
       state.expanded.clear();
-      searchInput.value = "";
-      searchResults.classList.remove("open");
+      if (!preserveSearch) {
+        state.searchQuery = "";
+        state.searchGroups = [];
+        state.searchOpenSections = {};
+        state.activeSearchKey = "";
+        searchInput.value = "";
+        renderSearchResults();
+        switchSidePanel("tree");
+      } else {
+        state.searchQuery = preservedSearchQuery;
+        state.searchGroups = preservedSearchGroups;
+        state.activeSearchKey = preservedActiveSearchKey;
+        state.searchOpenSections = preservedSearchOpenSections;
+      }
       vocabLabel.textContent = meta.name;
       vocabMenu.querySelectorAll(".vocab-option").forEach(option => {
         const active = Number(option.dataset.index) === index;
@@ -794,6 +1002,7 @@
       renderStats(meta);
       renderTree();
       expandRootLevel();
+      if (preserveSearch) renderSearchResults();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
       renderRelated(null);
     }
@@ -818,7 +1027,7 @@
       const roots = state.data.roots || [];
       treeEl.innerHTML = "";
       roots.forEach(id => treeEl.appendChild(renderNode(id, 0)));
-      treeStatus.textContent = `${roots.length} 个根节点`;
+      treeStatus.textContent = "";
     }
 
     function expandRootLevel() {
@@ -1148,6 +1357,13 @@
         .toLowerCase();
     }
 
+    function normalizeTerm(value) {
+      return String(value || "")
+        .replace(/\s+/g, "")
+        .replace(/[；;、，,。．.·・|｜:：\-－—_（）()《》〈〉\[\]【】"'“”‘’]/g, "")
+        .toLowerCase();
+    }
+
     function renderEntityCard(node, relatedItems) {
       const summary = buildEntitySummary(node, relatedItems);
       const rows = [
@@ -1284,6 +1500,31 @@
         .forEach(item => toggleNode(item.id, false));
     }
 
+    function locateCurrentNode() {
+      if (!state.selectedId) return;
+      switchSidePanel("tree");
+      revealNode(state.selectedId, { preserveRelatedOrder: true });
+    }
+
+    function locateSearchBox() {
+      switchSidePanel("search");
+      const pane = document.querySelector(".tree-pane");
+      const active = searchResults.querySelector(".result-item.active");
+      if (active) {
+        active.scrollIntoView({ block: "center" });
+        return;
+      }
+      searchInput.focus();
+      if (pane) pane.scrollTop = 0;
+    }
+
+    function setSearchGroupsOpen(open) {
+      searchResults.querySelectorAll(".search-group").forEach(group => {
+        group.open = open;
+        if (group.dataset.section) state.searchOpenSections[group.dataset.section] = open;
+      });
+    }
+
     async function loadSearchIndex() {
       if (state.searchIndex) return state.searchIndex;
       state.searchIndex = await fetch(dataUrl("data/search_index.json"), { cache: "no-store" }).then(r => r.json());
@@ -1291,54 +1532,249 @@
     }
 
     async function runSearch() {
-      const query = searchInput.value.trim().toLowerCase();
+      const rawQuery = searchInput.value.trim();
+      const query = rawQuery.toLowerCase();
+      state.searchQuery = rawQuery;
+      state.activeSearchKey = "";
+      state.searchOpenSections = {};
+      switchSidePanel(rawQuery ? "search" : "tree");
       if (!query) {
-        searchResults.classList.remove("open");
-        searchResults.innerHTML = "";
+        state.searchGroups = [];
+        renderSearchResults();
         return;
       }
-      searchResults.innerHTML = `<div class="sub">检索中...</div>`;
-      searchResults.classList.add("open");
+      searchResults.innerHTML = `<div class="search-summary">检索中...</div>`;
       const records = await loadSearchIndex();
-      const hits = records
-        .filter(record => record.text.includes(query))
-        .sort(searchResultSort)
-        .slice(0, 120);
-      searchResults.innerHTML = hits.length
-        ? hits.map(record => `
-            <div class="result-item" data-vocab="${esc(record.vocabId)}" data-id="${esc(record.id)}">
-              <span class="result-label">${esc(record.label)}</span>
-              <span class="sub result-vocab">${esc(resultMeta(record))}</span>
-            </div>
-          `).join("")
-        : `<div class="sub">无匹配</div>`;
-      searchResults.classList.add("open");
+      const hits = records.filter(record => record.text.includes(query));
+      state.searchGroups = buildSearchGroups(hits, rawQuery).slice(0, 80);
+      renderSearchResults();
+    }
+
+    function buildSearchGroups(records, rawQuery) {
+      const groups = new Map();
+      records.forEach(record => {
+        const match = bestSearchMatch(record, rawQuery);
+        if (!match) return;
+        const entityName = searchEntityName(record, match);
+        const key = normalizeTerm(entityName);
+        if (!key) return;
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            entityName,
+            records: [],
+            bestMatch: match,
+            currentCount: 0,
+            otherCount: 0,
+            bestRecord: record,
+          });
+        }
+        const group = groups.get(key);
+        group.records.push({ ...record, searchMatch: match });
+        if (record.vocabId === state.vocab?.id) group.currentCount += 1;
+        else group.otherCount += 1;
+        if (compareSearchRecords(record, match, group.bestRecord, group.bestMatch) < 0) {
+          group.bestRecord = record;
+          group.bestMatch = match;
+          group.entityName = searchEntityName(record, match);
+        }
+      });
+      return [...groups.values()].sort(searchGroupSort);
+    }
+
+    function renderSearchResults() {
+      if (!state.searchQuery) {
+        searchResults.innerHTML = `<div class="empty">输入关键词检索全库标准实体</div>`;
+        return;
+      }
+      const groups = state.searchGroups || [];
+      const displayGroups = rebaseSearchGroups(groups);
+      state.searchGroups = displayGroups;
+      searchResults.innerHTML = groups.length
+        ? `
+          <div class="search-summary">
+            <span>${esc(state.searchQuery)} · ${displayGroups.length} 个标准实体</span>
+            <span>按命中字段排序</span>
+          </div>
+          ${renderSearchGroupSections(displayGroups)}
+        `
+        : `<div class="empty">无匹配</div>`;
       searchResults.querySelectorAll(".result-item").forEach(item => {
-        item.addEventListener("click", () => openSearchResult(item.dataset.vocab, item.dataset.id));
+        item.addEventListener("click", () => openSearchResult(item.dataset.vocab, item.dataset.id, item.dataset.key));
+      });
+      searchResults.querySelectorAll(".search-group").forEach(group => {
+        group.addEventListener("toggle", () => {
+          if (group.dataset.section) state.searchOpenSections[group.dataset.section] = group.open;
+        });
       });
     }
 
-    function searchResultSort(a, b) {
-      const aCurrent = a.vocabId === state.vocab?.id ? 0 : 1;
-      const bCurrent = b.vocabId === state.vocab?.id ? 0 : 1;
-      return aCurrent - bCurrent
-        || (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
+    function rebaseSearchGroups(groups) {
+      return groups.map(group => {
+        const next = { ...group };
+        next.currentCount = 0;
+        next.otherCount = 0;
+        next.records = group.records || [];
+        next.bestRecord = next.records[0] || group.bestRecord;
+        next.bestMatch = next.bestRecord?.searchMatch || group.bestMatch;
+        next.records.forEach(record => {
+          if (record.vocabId === state.vocab?.id) next.currentCount += 1;
+          else next.otherCount += 1;
+          if (compareSearchRecords(record, record.searchMatch, next.bestRecord, next.bestMatch) < 0) {
+            next.bestRecord = record;
+            next.bestMatch = record.searchMatch;
+            next.entityName = searchEntityName(record, record.searchMatch);
+          }
+        });
+        return next;
+      }).sort(searchGroupSort);
+    }
+
+    function renderSearchGroupSections(groups) {
+      const sections = [
+        { title: "概念名", keys: new Set(["conceptName"]) },
+        { title: "正式名", keys: new Set(["preferredName"]) },
+        { title: "异名", keys: new Set(["aliases", "differentForms"]) },
+        { title: "英文名 / 拼音名", keys: new Set(["englishNames", "pinyinNames"]) },
+        { title: "定义 / 路径 / 来源", keys: new Set(["definition", "path", "definitionSources", "label"]) },
+      ];
+      const used = new Set();
+      const html = sections.map((section, idx) => {
+        const items = groups.filter(group => section.keys.has(group.bestMatch?.key || ""));
+        items.forEach(group => used.add(group.key));
+        if (!items.length) return "";
+        return `
+          <details class="search-group" data-section="${esc(section.title)}" ${searchSectionOpen(section.title) ? "open" : ""}>
+            <summary><span>${esc(section.title)}</span><span class="search-group-count">${items.length}</span></summary>
+            <div class="search-group-body">${items.map(group => renderSearchGroup(group, section.keys.size === 1 && section.keys.has("conceptName"))).join("")}</div>
+          </details>
+        `;
+      }).join("");
+      const leftovers = groups.filter(group => !used.has(group.key));
+      return html + (leftovers.length ? `
+        <details class="search-group" data-section="其他命中" ${searchSectionOpen("其他命中") ? "open" : ""}>
+          <summary><span>其他命中</span><span class="search-group-count">${leftovers.length}</span></summary>
+          <div class="search-group-body">${leftovers.map(group => renderSearchGroup(group, false)).join("")}</div>
+        </details>
+      ` : "");
+    }
+
+    function searchSectionOpen(title) {
+      return Object.prototype.hasOwnProperty.call(state.searchOpenSections, title)
+        ? state.searchOpenSections[title]
+        : true;
+    }
+
+    function renderSearchGroup(group, inConceptNameSection = false) {
+      const record = group.bestRecord;
+      const match = group.bestMatch;
+      const isDirectConceptName = match?.key === "conceptName";
+      const context = searchContext(record, match, state.searchQuery);
+      return `
+        <button class="result-item${state.activeSearchKey === group.key ? " active" : ""}" type="button"
+          data-key="${esc(group.key)}" data-vocab="${esc(record.vocabId)}" data-id="${esc(record.id)}">
+          <span class="result-label">
+            <span>${highlightText(group.entityName, state.searchQuery)}</span>
+            ${!inConceptNameSection ? `<span class="result-vocab-tag">${esc(record.vocabName || record.vocabId || "")}</span>` : ""}
+          </span>
+          ${!isDirectConceptName && context ? `<span class="result-context">${context}</span>` : ""}
+        </button>
+      `;
+    }
+
+    function searchGroupSort(a, b) {
+      return searchMatchRank(a.bestMatch) - searchMatchRank(b.bestMatch)
+        || compareSearchRecordBase(a.bestRecord, b.bestRecord)
+        || String(a.entityName).localeCompare(String(b.entityName), "zh-Hans-CN");
+    }
+
+    function compareSearchRecords(aRecord, aMatch, bRecord, bMatch) {
+      return searchMatchRank(aMatch) - searchMatchRank(bMatch)
+        || compareSearchRecordBase(aRecord, bRecord);
+    }
+
+    function compareSearchRecordBase(a, b) {
+      return (a.vocabCategoryOrder ?? 99) - (b.vocabCategoryOrder ?? 99)
         || (a.vocabOrder ?? 9999) - (b.vocabOrder ?? 9999)
         || String(a.vocabName).localeCompare(String(b.vocabName), "zh-Hans-CN")
         || String(a.path).localeCompare(String(b.path), "zh-Hans-CN")
         || String(a.label).localeCompare(String(b.label), "zh-Hans-CN");
     }
 
-    function resultMeta(record) {
-      return record.vocabId === state.vocab?.id ? `本词表 · ${record.vocabName || record.vocabId}` : record.vocabName || record.vocabId;
+    function bestSearchMatch(record, rawQuery) {
+      const query = String(rawQuery || "").toLowerCase();
+      const fields = [
+        ["conceptName", "概念名", 0],
+        ["preferredName", "正式名", 1],
+        ["aliases", "异名", 2],
+        ["differentForms", "不同文字形式", 3],
+        ["englishNames", "英文名", 4],
+        ["pinyinNames", "拼音名", 5],
+        ["definition", "定义", 6],
+        ["path", "所属路径", 7],
+        ["definitionSources", "来源", 8],
+        ["label", "节点名", 9],
+      ];
+      let best = null;
+      fields.forEach(([key, label, rank]) => {
+        const value = String(record[key] || "");
+        if (!value || !value.toLowerCase().includes(query)) return;
+        const exact = normalizeTerm(value) === normalizeTerm(rawQuery);
+        const candidate = { key, label, rank, value, exact };
+        if (!best || searchMatchRank(candidate) < searchMatchRank(best)) best = candidate;
+      });
+      return best;
     }
 
-    async function openSearchResult(vocabId, nodeId) {
+    function searchMatchRank(match) {
+      if (!match) return 999;
+      return (match.rank ?? 99) * 2 + (match.exact ? 0 : 1);
+    }
+
+    function searchEntityName(record, match) {
+      return record.conceptName || record.preferredName || record.label || match?.value || record.id;
+    }
+
+    function searchContext(record, match, query) {
+      const field = match?.label || "";
+      const value = match?.value || "";
+      const text = snippetFor(value, query, 64);
+      return `<span class="result-pill">${esc(field)}</span>${highlightText(text, query)}`;
+    }
+
+    function snippetFor(value, query, radius = 50) {
+      const text = String(value || "").replace(/\s+/g, " ").trim();
+      const q = String(query || "").trim();
+      if (!q || text.length <= radius * 2) return text;
+      const lower = text.toLowerCase();
+      const idx = lower.indexOf(q.toLowerCase());
+      if (idx < 0) return text.slice(0, radius * 2) + "…";
+      const start = Math.max(0, idx - radius);
+      const end = Math.min(text.length, idx + q.length + radius);
+      return `${start ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;
+    }
+
+    function highlightText(value, query) {
+      const text = esc(value || "");
+      const raw = String(query || "").trim();
+      if (!raw) return text;
+      const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      try {
+        return text.replace(new RegExp(escaped, "gi"), match => `<mark class="hit">${match}</mark>`);
+      } catch {
+        return text;
+      }
+    }
+
+    async function openSearchResult(vocabId, nodeId, groupKey = "") {
+      state.activeSearchKey = groupKey || "";
       if (state.vocab?.id !== vocabId) {
         const index = state.index.findIndex(item => item.id === vocabId);
         if (index < 0) return;
-        await loadVocab(index);
+        await loadVocab(index, { preserveSearch: true });
       }
+      renderSearchResults();
+      switchSidePanel("search");
       revealNode(nodeId, { preserveRelatedOrder: false });
     }
 
