@@ -631,7 +631,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-gbt40997-trimmed";
+    const APP_VERSION = "20260627-hide-duplicate-preferred";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -902,6 +902,7 @@
     function renderDetail(node) {
       const visibleFields = fields.filter(([key]) => {
         const value = node[key];
+        if (key === "preferredName" && sameDisplayValue(value, node.conceptName)) return false;
         return Array.isArray(value) ? value.length : String(value || "").trim();
       });
       const imagePaths = Array.isArray(node.imagePaths) ? node.imagePaths : [];
@@ -1232,6 +1233,10 @@
     function fieldLabel(node, key, fallback) {
       if (key === "definitions" && node.definitionsLabel) return node.definitionsLabel;
       return fallback;
+    }
+
+    function sameDisplayValue(a, b) {
+      return String(a || "").trim() && String(a || "").trim() === String(b || "").trim();
     }
 
     function collapseAll() {
