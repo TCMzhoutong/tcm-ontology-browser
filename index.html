@@ -383,18 +383,6 @@
       font-size: 11px;
       line-height: 1.45;
     }
-    .related-current {
-      flex: 0 0 auto;
-      border: 1px solid rgba(47, 111, 115, .28);
-      border-radius: 999px;
-      padding: 1px 6px;
-      background: #fff;
-      color: var(--accent);
-      font-size: 11px;
-      line-height: 1.45;
-      font-weight: 650;
-      white-space: nowrap;
-    }
     .related-match, .related-definition {
       color: var(--muted);
       font-size: 12px;
@@ -657,7 +645,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-tree-order-fix";
+    const APP_VERSION = "20260627-related-current-no-label";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -1072,7 +1060,6 @@
           <span class="related-heading">
             <span class="related-vocab">${esc(item.vocabName || item.vocabId)}</span>
             ${item.vocabCategory ? `<span class="related-category">${esc(item.vocabCategory)}</span>` : ""}
-            ${item.isCurrent ? `<span class="related-current">当前</span>` : ""}
           </span>
           ${path ? `<span class="related-path">${renderPath(path, { compact: true })}</span>` : ""}
           ${summary ? `<span class="related-definition">${esc(summary)}</span>` : ""}
