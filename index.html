@@ -241,6 +241,14 @@
       background: rgba(24, 95, 88, .10);
       color: var(--accent);
     }
+    .twisty.empty {
+      cursor: default;
+      pointer-events: none;
+    }
+    .twisty.empty:hover {
+      background: transparent;
+      color: var(--muted);
+    }
     .node-label {
       min-width: 0;
       overflow: hidden;
@@ -628,7 +636,7 @@
           <span id="treeStatus">加载中</span>
           <span class="tree-actions">
             <button id="collapseLevelBtn" title="保留根节点展开，只收起更深层级">收至一级</button>
-            <button id="collapseAllBtn" title="收起全部目录，只保留根节点">全收起</button>
+            <button id="collapseCurrentBtn" title="收起当前选中节点的下级目录">收起当前</button>
           </span>
         </div>
         <div id="searchResults" class="search-results"></div>
@@ -645,7 +653,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-tree-toggle-buttons";
+    const APP_VERSION = "20260627-collapse-current";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -739,7 +747,7 @@
         }
       });
       document.getElementById("collapseLevelBtn").addEventListener("click", collapseToRootLevel);
-      document.getElementById("collapseAllBtn").addEventListener("click", collapseAll);
+      document.getElementById("collapseCurrentBtn").addEventListener("click", collapseCurrent);
       searchInput.addEventListener("input", debounce(runSearch, 180));
       await loadVocab(0);
     }
@@ -842,10 +850,10 @@
       row.dataset.id = id;
 
       const twisty = document.createElement("div");
-      twisty.className = "twisty";
+      twisty.className = childIds.length ? "twisty" : "twisty empty";
       twisty.textContent = childIds.length ? "▸" : "";
       twisty.title = childIds.length ? "展开/收起" : "";
-      twisty.setAttribute("aria-label", childIds.length ? "展开或收起节点" : "无下级节点");
+      twisty.setAttribute("aria-label", childIds.length ? "展开或收起节点" : "");
       row.appendChild(twisty);
 
       const label = document.createElement("div");
@@ -858,10 +866,12 @@
       meta.textContent = childIds.length ? childIds.length : "";
       row.appendChild(meta);
 
-      twisty.addEventListener("click", event => {
-        event.stopPropagation();
-        if (childIds.length) toggleNode(id);
-      });
+      if (childIds.length) {
+        twisty.addEventListener("click", event => {
+          event.stopPropagation();
+          toggleNode(id);
+        });
+      }
 
       row.addEventListener("click", event => {
         event.stopPropagation();
@@ -1268,10 +1278,16 @@
       expandRootLevel();
     }
 
-    function collapseAll() {
-      state.expanded.clear();
-      state.rendered.clear();
-      renderTree();
+    function collapseCurrent() {
+      if (!state.selectedId) return;
+      const selectedWrap = state.rendered.get(state.selectedId);
+      if (!selectedWrap) return;
+      const childrenEl = selectedWrap.querySelector(`[data-children-of="${CSS.escape(state.selectedId)}"]`);
+      const twisty = selectedWrap.querySelector(".twisty");
+      if (!childrenEl || !state.expanded.has(state.selectedId)) return;
+      childrenEl.classList.remove("open");
+      if (twisty) twisty.textContent = "▸";
+      state.expanded.delete(state.selectedId);
     }
 
     async function loadSearchIndex() {
