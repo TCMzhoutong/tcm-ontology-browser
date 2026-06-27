@@ -5,7 +5,7 @@
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 0,
-    "file": "V026.json",
+    "file": "V026.12346v3.json",
     "nodes": 441,
     "roots": 1
   },
@@ -35,7 +35,7 @@
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 3,
-    "file": "V004.json",
+    "file": "V004.167513v1.json",
     "nodes": 1275,
     "roots": 1
   },
@@ -45,7 +45,7 @@
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 4,
-    "file": "V005.json",
+    "file": "V005.20348v1.json",
     "nodes": 1199,
     "roots": 1
   },
@@ -55,7 +55,7 @@
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 5,
-    "file": "V006.json",
+    "file": "V006.30232v1.json",
     "nodes": 1234,
     "roots": 1
   },
@@ -85,10 +85,10 @@
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 8,
-    "file": "V009.json",
+    "file": "V009.42467v2.json",
     "nodes": 1628,
     "roots": 1,
-    "relatedFile": "related_exact/V009.json"
+    "relatedFile": "related_exact/V009.42467v2.json"
   },
   {
     "id": "V015",
