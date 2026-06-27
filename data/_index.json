@@ -111,12 +111,12 @@
   },
   {
     "id": "V018",
-    "name": "中国中医药学主题词表",
+    "name": "中国中医药学主题词表（2008）",
     "category": "本体术语类",
     "categoryOrder": 0,
     "vocabOrder": 11,
     "file": "V018.json",
-    "nodes": 8453,
+    "nodes": 12123,
     "roots": 1
   },
   {

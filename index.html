@@ -645,7 +645,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-zymt-2011-short-name";
+    const APP_VERSION = "20260627-tcmthes-2008-rebuild";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -707,6 +707,7 @@
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
     const relatedList = document.getElementById("relatedList");
+
     function esc(text) {
       return String(text ?? "").replace(/[&<>"']/g, ch => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
