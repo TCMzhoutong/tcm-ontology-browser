@@ -657,7 +657,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-collapse-one-level";
+    const APP_VERSION = "20260627-label-double-click-toggle";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -872,6 +872,10 @@
 
       if (childIds.length) {
         twisty.addEventListener("click", event => {
+          event.stopPropagation();
+          toggleNode(id);
+        });
+        label.addEventListener("dblclick", event => {
           event.stopPropagation();
           toggleNode(id);
         });
