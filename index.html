@@ -657,7 +657,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-label-double-click-toggle";
+    const APP_VERSION = "20260627-legacy-vocab-rebuild";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -719,8 +719,6 @@
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
     const relatedList = document.getElementById("relatedList");
-    const DATA_BUILD = "40997v2";
-
     function esc(text) {
       return String(text ?? "").replace(/[&<>"']/g, ch => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -728,7 +726,7 @@
     }
 
     async function init() {
-      state.index = await fetch(dataUrl(`data/_index.${DATA_BUILD}.json`), { cache: "no-store" }).then(r => r.json());
+      state.index = await fetch(dataUrl("data/_index.json"), { cache: "no-store" }).then(r => r.json());
       document.body.appendChild(vocabMenu);
       renderVocabMenu();
       vocabButton.addEventListener("click", event => {
