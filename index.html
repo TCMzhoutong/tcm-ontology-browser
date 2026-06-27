@@ -230,6 +230,7 @@
       height: 28px;
       display: grid;
       place-items: center;
+      align-self: center;
       color: var(--muted);
       font-size: 18px;
       line-height: 1;
@@ -242,6 +243,9 @@
       color: var(--accent);
     }
     .twisty.empty {
+      height: 0;
+      min-height: 0;
+      overflow: hidden;
       cursor: default;
       pointer-events: none;
     }
@@ -653,7 +657,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260627-collapse-current";
+    const APP_VERSION = "20260627-leaf-row-height-fix";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
