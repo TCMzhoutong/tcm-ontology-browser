@@ -724,9 +724,15 @@
     }
     .search-group-count {
       margin-left: auto;
-      color: var(--muted);
-      font-weight: 500;
+      min-width: 22px;
+      padding: 1px 7px;
+      border: 1px solid #d3cabc;
+      border-radius: 999px;
+      background: #f8f4eb;
+      color: #776f62;
+      font-weight: 700;
       font-size: 12px;
+      text-align: center;
     }
     .search-group-body {
       display: grid;
@@ -767,7 +773,7 @@
         </button>
       </div>
       <div class="stats" id="stats"></div>
-      <input id="searchInput" placeholder="全库检索标准实体、异名、英文名、定义" />
+      <input id="searchInput" placeholder="全库检索概念名、异名、定义、组成、功效、主治等字段" />
     </header>
     <main class="main">
       <section class="tree-pane">
@@ -808,7 +814,8 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260628-search-locate-opens-group";
+    const APP_VERSION = "20260628-search-all-fields-v2";
+    const SEARCH_SECTION_LIMIT = 80;
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -863,6 +870,34 @@
       ["otherTermTypes", "其他术语"],
       ["extraInfo", "补充信息"],
     ];
+
+    const searchFieldDefs = [
+      ["conceptName", "概念名", 0],
+      ["preferredName", "正式名", 1],
+      ["aliases", "异名", 2],
+      ["differentForms", "异名", 3],
+      ["englishNames", "英文名", 4],
+      ["pinyinNames", "拼音名", 5],
+      ["definition", "定义", 10],
+      ["medicineSource", "来源", 20],
+      ["formulaSource", "来源", 21],
+      ["materialName", "药材名", 22],
+      ["medicinalPart", "药用部位", 23],
+      ["sliceSpec", "饮片规格", 24],
+      ["processingMethod", "炮制方法", 25],
+      ["formulaCategory", "分类", 26],
+      ["formulaSubcategory", "功用小类", 27],
+      ["formulaCode", "方剂编码", 28],
+      ["formulaComposition", "组成", 29],
+      ["formulaEfficacy", "功效", 30],
+      ["formulaIndications", "主治", 31],
+      ["formulaRemark", "备注", 32],
+      ["jianboSources", "来源简帛", 33],
+      ["attachmentInfo", "附件信息", 34],
+      ["otherTermTypes", "其他术语", 35],
+      ["extraInfo", "补充信息", 36],
+      ["label", "节点名", 90],
+    ].map(([key, label, rank]) => ({ key, label, rank }));
 
     const vocabPicker = document.getElementById("vocabPicker");
     const vocabButton = document.getElementById("vocabButton");
@@ -1625,26 +1660,13 @@
       searchResults.innerHTML = `<div class="search-summary">检索中...</div>`;
       const records = await loadSearchIndex();
       const hits = records.filter(record => searchRecordText(record).includes(query));
-      state.searchGroups = buildSearchGroups(hits, rawQuery).slice(0, 80);
+      state.searchGroups = buildSearchGroups(hits, rawQuery);
       renderSearchResults();
     }
 
     function searchRecordText(record) {
       if (record.text) return String(record.text).toLowerCase();
-      return [
-        record.id,
-        record.label,
-        record.conceptName,
-        record.preferredName,
-        record.aliases,
-        record.englishNames,
-        record.pinyinNames,
-        record.differentForms,
-        record.definition,
-        record.definitionSources,
-        record.path,
-        record.vocabName,
-      ].filter(Boolean).join(" ").toLowerCase();
+      return searchFieldDefs.map(field => record[field.key]).filter(Boolean).join(" ").toLowerCase();
     }
 
     function buildSearchGroups(records, rawQuery) {
@@ -1691,7 +1713,7 @@
         ? `
           <div class="search-summary">
             <span>${esc(state.searchQuery)} · ${displayGroups.length} 个标准实体</span>
-            <span>按命中字段排序</span>
+            <span>按字段分组</span>
           </div>
           ${renderSearchGroupSections(displayGroups)}
         `
@@ -1728,22 +1750,21 @@
     }
 
     function renderSearchGroupSections(groups) {
-      const sections = [
-        { title: "概念名", keys: new Set(["conceptName"]) },
-        { title: "正式名", keys: new Set(["preferredName"]) },
-        { title: "异名", keys: new Set(["aliases", "differentForms"]) },
-        { title: "英文名 / 拼音名", keys: new Set(["englishNames", "pinyinNames"]) },
-        { title: "定义 / 路径 / 来源", keys: new Set(["definition", "path", "definitionSources", "label"]) },
-      ];
+      const sections = searchFieldSections();
       const used = new Set();
       const html = sections.map((section, idx) => {
         const items = groups.filter(group => section.keys.has(group.bestMatch?.key || ""));
         items.forEach(group => used.add(group.key));
         if (!items.length) return "";
+        const visibleItems = items.slice(0, SEARCH_SECTION_LIMIT);
+        const overflow = items.length - visibleItems.length;
         return `
           <details class="search-group" data-section="${esc(section.title)}" ${searchSectionOpen(section.title) ? "open" : ""}>
             <summary><span>${esc(section.title)}</span><span class="search-group-count">${items.length}</span></summary>
-            <div class="search-group-body">${items.map(group => renderSearchGroup(group, section.keys.size === 1 && section.keys.has("conceptName"))).join("")}</div>
+            <div class="search-group-body">
+              ${visibleItems.map(group => renderSearchGroup(group, section.keys.size === 1 && section.keys.has("conceptName"))).join("")}
+              ${overflow > 0 ? `<div class="search-summary">还有 ${overflow} 个结果，继续缩小关键词可查看</div>` : ""}
+            </div>
           </details>
         `;
       }).join("");
@@ -1764,12 +1785,20 @@
 
     function searchSectionTitleForGroup(group) {
       const key = group?.bestMatch?.key || "";
-      if (key === "conceptName") return "概念名";
-      if (key === "preferredName") return "正式名";
-      if (["aliases", "differentForms"].includes(key)) return "异名";
-      if (["englishNames", "pinyinNames"].includes(key)) return "英文名 / 拼音名";
-      if (["definition", "path", "definitionSources", "label"].includes(key)) return "定义 / 路径 / 来源";
+      const field = searchFieldDefs.find(item => item.key === key);
+      if (field) return field.label;
       return group ? "其他命中" : "";
+    }
+
+    function searchFieldSections() {
+      const sectionMap = new Map();
+      searchFieldDefs.forEach(field => {
+        if (!sectionMap.has(field.label)) {
+          sectionMap.set(field.label, { title: field.label, keys: new Set() });
+        }
+        sectionMap.get(field.label).keys.add(field.key);
+      });
+      return [...sectionMap.values()];
     }
 
     function renderSearchGroup(group, inConceptNameSection = false) {
@@ -1810,20 +1839,8 @@
 
     function bestSearchMatch(record, rawQuery) {
       const query = String(rawQuery || "").toLowerCase();
-      const fields = [
-        ["conceptName", "概念名", 0],
-        ["preferredName", "正式名", 1],
-        ["aliases", "异名", 2],
-        ["differentForms", "不同文字形式", 3],
-        ["englishNames", "英文名", 4],
-        ["pinyinNames", "拼音名", 5],
-        ["definition", "定义", 6],
-        ["path", "所属路径", 7],
-        ["definitionSources", "来源", 8],
-        ["label", "节点名", 9],
-      ];
       let best = null;
-      fields.forEach(([key, label, rank]) => {
+      searchFieldDefs.forEach(({ key, label, rank }) => {
         const value = String(record[key] || "");
         if (!value || !value.toLowerCase().includes(query)) return;
         const exact = normalizeTerm(value) === normalizeTerm(rawQuery);
