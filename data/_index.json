@@ -110,6 +110,16 @@
     "roots": 1
   },
   {
+    "id": "V018",
+    "name": "中国中医药学主题词表（2008）",
+    "category": "本体术语类",
+    "categoryOrder": 0,
+    "vocabOrder": 11,
+    "file": "V018.json",
+    "nodes": 7354,
+    "roots": 1
+  },
+  {
     "id": "V019",
     "name": "中药成方制剂-v2.0",
     "category": "本体术语类",
@@ -127,6 +137,16 @@
     "vocabOrder": 13,
     "file": "V020.json",
     "nodes": 5884,
+    "roots": 1
+  },
+  {
+    "id": "V021",
+    "name": "临床术语",
+    "category": "本体术语类",
+    "categoryOrder": 0,
+    "vocabOrder": 14,
+    "file": "V021.json",
+    "nodes": 37060,
     "roots": 1
   },
   {

@@ -808,7 +808,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260628-preserve-related-search";
+    const APP_VERSION = "20260628-fixed-summary-anchor";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -966,7 +966,9 @@
       const preservedSearchGroups = state.searchGroups;
       const preservedActiveSearchKey = state.activeSearchKey;
       const preservedSearchOpenSections = state.searchOpenSections;
+      const preservedRelatedGroup = state.relatedGroup;
       const preserveSearch = Boolean(options.preserveSearch);
+      const preserveRelatedGroup = Boolean(options.preserveRelatedGroup);
       state.vocab = meta;
       const [data, related] = await Promise.all([
         fetch(dataUrl(`data/${encodeURIComponent(meta.file)}`), { cache: "no-store" }).then(r => r.json()),
@@ -976,7 +978,7 @@
       state.related = related;
       state.selectedId = null;
       state.relatedOrder = null;
-      state.relatedGroup = null;
+      state.relatedGroup = preserveRelatedGroup ? preservedRelatedGroup : null;
       state.rendered.clear();
       state.expanded.clear();
       if (!preserveSearch) {
@@ -1004,7 +1006,11 @@
       expandRootLevel();
       if (preserveSearch) renderSearchResults();
       detailEl.innerHTML = `<div class="empty">选择一个节点查看属性</div>`;
-      renderRelated(null);
+      if (preserveRelatedGroup) {
+        relatedList.innerHTML = "";
+      } else {
+        renderRelated(null);
+      }
     }
 
     async function loadRelatedShard(vocabId) {
@@ -1173,12 +1179,26 @@
     function renderRelated(node) {
       if (!node) {
         relatedList.innerHTML = "";
+        state.relatedGroup = null;
         return;
       }
       const matches = state.related[node.id] || [];
-      const relatedItems = buildRelatedItems(node, matches);
+      const currentKey = `${state.vocab?.id || ""}::${node.id || ""}`;
+      let relatedItems;
+      let summaryAnchor;
+      if (state.relatedGroup?.items?.some(item => relatedKey(item) === currentKey)) {
+        relatedItems = markCurrentRelatedItems(state.relatedGroup.items, currentKey);
+        summaryAnchor = state.relatedGroup.anchor || relatedItems.find(item => item.isCurrent) || node;
+      } else {
+        relatedItems = buildRelatedItems(node, matches);
+        summaryAnchor = relatedItems.find(item => relatedKey(item) === currentKey) || relatedItems.find(item => item.isCurrent) || node;
+        state.relatedGroup = {
+          anchor: { ...summaryAnchor },
+          items: relatedItems.map(item => ({ ...item })),
+        };
+      }
       relatedList.innerHTML = `
-        ${renderEntityCard(node, relatedItems)}
+        ${renderEntityCard(summaryAnchor, relatedItems)}
         ${relatedItems.length ? `
           <div class="related-section-title">实体对齐项</div>
           ${relatedItems.map(renderRelatedItem).join("")}
@@ -1252,6 +1272,12 @@
         ordered.push(item);
       });
       return ordered;
+    }
+
+    function markCurrentRelatedItems(items, currentKey) {
+      const cloned = items.map(item => ({ ...item, isCurrent: relatedKey(item) === currentKey }));
+      if (state.relatedOrder?.length) return applyRelatedOrder(cloned, currentKey);
+      return cloned;
     }
 
     function relatedItemSort(a, b) {
@@ -1390,16 +1416,51 @@
 
     function buildEntitySummary(node, relatedItems) {
       const records = relatedItems?.length ? relatedItems : [node];
-      const rawNames = collectUnique(records, ["conceptName", "preferredName", "label", "aliases", "differentForms", "matchedTerms"]);
+      const standardName = chooseStandardName(node, records);
+      const rawNames = collectEntityNames(node, records, standardName);
       const latinNames = rawNames.filter(looksLatinTerm);
       const names = rawNames.filter(value => !looksLatinTerm(value));
       return {
-        standardName: chooseStandardName(node, records),
+        standardName,
         names,
         englishNames: mergeUnique(collectUnique(records, ["englishNames"]), latinNames),
         pinyinNames: collectUnique(records, ["pinyinNames"]),
         relatedCount: records.length,
       };
+    }
+
+    function collectEntityNames(node, records, standardName) {
+      const values = [];
+      const seen = new Set();
+      const add = value => splitValues(value).forEach(item => {
+        const normalized = item.replace(/\s+/g, "").toLowerCase();
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        values.push(item);
+      });
+      const sameAsStandard = record => {
+        const standard = normalizeTerm(standardName);
+        return [record?.conceptName, record?.preferredName, record?.label]
+          .some(value => normalizeTerm(value) === standard);
+      };
+
+      add(node?.conceptName);
+      add(node?.preferredName);
+      add(node?.label);
+      add(node?.aliases);
+      add(node?.differentForms);
+
+      records.forEach(record => {
+        add(record?.conceptName);
+        add(record?.preferredName);
+        add(record?.label);
+        add(record?.matchedTerms);
+        if (sameAsStandard(record)) {
+          add(record?.aliases);
+          add(record?.differentForms);
+        }
+      });
+      return values;
     }
 
     function chooseStandardName(node, records) {
@@ -1467,7 +1528,7 @@
       if (state.vocab?.id !== vocabId) {
         const index = state.index.findIndex(item => item.id === vocabId);
         if (index < 0) return;
-        await loadVocab(index, { preserveSearch: true });
+        await loadVocab(index, { preserveSearch: true, preserveRelatedGroup: true });
         state.relatedOrder = relatedOrder;
       }
       renderSearchResults();
@@ -1547,9 +1608,27 @@
       }
       searchResults.innerHTML = `<div class="search-summary">检索中...</div>`;
       const records = await loadSearchIndex();
-      const hits = records.filter(record => record.text.includes(query));
+      const hits = records.filter(record => searchRecordText(record).includes(query));
       state.searchGroups = buildSearchGroups(hits, rawQuery).slice(0, 80);
       renderSearchResults();
+    }
+
+    function searchRecordText(record) {
+      if (record.text) return String(record.text).toLowerCase();
+      return [
+        record.id,
+        record.label,
+        record.conceptName,
+        record.preferredName,
+        record.aliases,
+        record.englishNames,
+        record.pinyinNames,
+        record.differentForms,
+        record.definition,
+        record.definitionSources,
+        record.path,
+        record.vocabName,
+      ].filter(Boolean).join(" ").toLowerCase();
     }
 
     function buildSearchGroups(records, rawQuery) {
