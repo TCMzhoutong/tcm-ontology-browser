@@ -808,7 +808,7 @@
   <div id="vocabMenu" class="vocab-menu" role="listbox" aria-label="选择词表"></div>
 
   <script>
-    const APP_VERSION = "20260628-fixed-summary-anchor";
+    const APP_VERSION = "20260628-search-locate-opens-group";
 
     function dataUrl(path) {
       const separator = path.includes("?") ? "&" : "?";
@@ -1572,7 +1572,23 @@
     function locateSearchBox() {
       switchSidePanel("search");
       const pane = document.querySelector(".tree-pane");
-      const active = searchResults.querySelector(".result-item.active");
+      let active = searchResults.querySelector(".result-item.active");
+      const activeGroupElement = active?.closest(".search-group");
+      if (activeGroupElement && !activeGroupElement.open) {
+        activeGroupElement.open = true;
+        if (activeGroupElement.dataset.section) {
+          state.searchOpenSections[activeGroupElement.dataset.section] = true;
+        }
+      }
+      if (!active && state.activeSearchKey) {
+        const activeGroup = (state.searchGroups || []).find(group => group.key === state.activeSearchKey);
+        const sectionTitle = searchSectionTitleForGroup(activeGroup);
+        if (sectionTitle) {
+          state.searchOpenSections[sectionTitle] = true;
+          renderSearchResults();
+          active = searchResults.querySelector(".result-item.active");
+        }
+      }
       if (active) {
         active.scrollIntoView({ block: "center" });
         return;
@@ -1744,6 +1760,16 @@
       return Object.prototype.hasOwnProperty.call(state.searchOpenSections, title)
         ? state.searchOpenSections[title]
         : true;
+    }
+
+    function searchSectionTitleForGroup(group) {
+      const key = group?.bestMatch?.key || "";
+      if (key === "conceptName") return "概念名";
+      if (key === "preferredName") return "正式名";
+      if (["aliases", "differentForms"].includes(key)) return "异名";
+      if (["englishNames", "pinyinNames"].includes(key)) return "英文名 / 拼音名";
+      if (["definition", "path", "definitionSources", "label"].includes(key)) return "定义 / 路径 / 来源";
+      return group ? "其他命中" : "";
     }
 
     function renderSearchGroup(group, inConceptNameSection = false) {
